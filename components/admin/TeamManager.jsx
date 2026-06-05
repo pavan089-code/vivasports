@@ -4,6 +4,16 @@ import { useState } from "react";
 import Card from "../ui/Card";
 import { createTeam } from "@/services/teamService";
 
+function uniqueNames(names) {
+  return names
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .filter(
+      (name, index, all) =>
+        all.findIndex((item) => item.toLowerCase() === name.toLowerCase()) === index
+    );
+}
+
 export default function TeamManager() {
   const [teamName, setTeamName] = useState("");
   const [captainName, setCaptainName] = useState("");
@@ -15,11 +25,12 @@ export default function TeamManager() {
       return;
     }
 
+    const captain = captainName.trim();
     const teamId = await createTeam({
       name: teamName,
-      captain: captainName,
+      captain,
       logo: logoUrl,
-      players: [],
+      players: uniqueNames([captain]),
     });
 
     alert(`Team Created: ${teamId}`);

@@ -3,6 +3,7 @@
 import Container from "../Layout/Container";
 import Button from "../ui/Button";
 
+import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
@@ -62,7 +63,7 @@ export default function Hero() {
               Experience realtime cricket scoring,
               live match broadcasts, tournament standings
               and unforgettable moments — all powered by
-              VIVA Cricket.
+              Viva Sports.
 
             </p>
 
@@ -134,13 +135,21 @@ export default function Hero() {
             <div className="absolute bottom-10 right-10 w-40 h-40 bg-blue-500/20 blur-3xl rounded-full" />
 
             {/* Player Image */}
-            <img
-              src="/batsman.png"
-              alt="Cricket Player"
+            <Image
+              src="/logo.jpeg"
+              alt="Viva Sports"
+              width={520}
+              height={520}
+              priority
+              sizes="(min-width: 1024px) 42vw, 90vw"
               className="
                 relative
                 z-10
                 w-full
+                max-w-md
+                mx-auto
+                rounded-2xl
+                object-cover
                 drop-shadow-[0_0_60px_rgba(34,211,238,0.25)]
               "
             />

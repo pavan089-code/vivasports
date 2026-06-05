@@ -1,11 +1,12 @@
 export function getMatchResult(
   match,
   score,
-  wickets
+  wickets,
+  totalBalls = match.totalBalls
 ) {
   // CHASE SUCCESSFUL
 
-  if (score >= match.target) {
+  if (match.target && score >= match.target) {
     return {
       winner: match.battingTeam,
 
@@ -16,7 +17,7 @@ export function getMatchResult(
   }
 
   const oversComplete =
-    match.totalBalls >=
+    totalBalls >=
     match.oversLimit * 6;
 
   const allOut =
@@ -26,13 +27,24 @@ export function getMatchResult(
     oversComplete ||
     allOut
   ) {
+    const margin =
+      match.target -
+      score -
+      1;
+
+    if (margin === 0) {
+      return {
+        winner: null,
+
+        result: "Match tied",
+      };
+    }
+
     return {
       winner: match.bowlingTeam,
 
       result: `Won by ${
-        match.target -
-        score -
-        1
+        margin
       } runs`,
     };
   }

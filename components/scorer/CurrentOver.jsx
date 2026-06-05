@@ -17,15 +17,7 @@ export default function CurrentOver({ balls }) {
             text-white
           "
         >
-          <span>
-            {ball === "W" && "W"}
-
-            {ball === "WD" && "WD"}
-
-            {ball === "NB" && "NB"}
-
-            {typeof ball === "number" && ball}
-          </span>
+          <span>{String(ball)}</span>
         </div>
       ))}
     </div>

@@ -2,45 +2,28 @@
 
 import { useEffect, useState } from "react";
 
-import {
-  ref,
-  onValue
-} from "firebase/database";
+import { subscribeToMatch } from "@/services/matchService";
 
-import { db } from "@/lib/firebase";
-
-export default function useMatch(matchId) {
-
-  const [match, setMatch] = useState(null);
+export default function useLiveMatch(matchId) {
+  const [state, setState] = useState({
+    match: null,
+    matchId,
+  });
 
   useEffect(() => {
+    if (!matchId) {
+      return undefined;
+    }
 
-    if (!matchId) return;
-
-    const matchRef = ref(
-      db,
-      `matches/${matchId}`
-    );
-
-    const unsubscribe = onValue(
-      matchRef,
-      (snapshot) => {
-
-        if (snapshot.exists()) {
-
-          setMatch({
-            id: matchId,
-            ...snapshot.val()
-          });
-
-        }
-
-      }
-    );
+    const unsubscribe = subscribeToMatch(matchId, (data) => {
+      setState({
+        match: data,
+        matchId,
+      });
+    });
 
     return () => unsubscribe();
-
   }, [matchId]);
 
-  return match;
+  return state.matchId === matchId ? state.match : null;
 }

@@ -5,7 +5,7 @@ import FixturesList from "@/components/fixtures/FixturesList";
 
 export default function FixturesPage() {
   return (
-    <main className="bg-[#050B18] min-h-screen">
+    <main className="vs-page">
       <Navbar />
 
       <FixturesList />

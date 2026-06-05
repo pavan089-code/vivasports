@@ -1,85 +1,134 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
 
-import  Link from "next/link";
-import { Menu, X } from "lucide-react"; 
 import Container from "./Container";
-import Button from "../ui/Button";
+
+const primaryLinks = [
+  ["Home", "/"],
+  ["Live", "/live"],
+  ["Fixtures", "/fixtures"],
+  ["Results", "/results"],
+  ["Points Table", "/points_table"],
+];
+
+const secondaryLinks = [
+  ["Teams", "/teams"],
+  ["Players", "/players"],
+  ["Leaderboards", "/leaderboards"],
+  ["Awards", "/awards"],
+  ["Analytics", "/analytics"],
+  ["Statistics", "/stats"],
+  ["Seasons", "/seasons"],
+  ["Hall Of Fame", "/hall-of-fame"],
+  ["Rivalries", "/rivalries"],
+  ["Milestones", "/milestones"],
+  ["Match Reports", "/match-reports"],
+  ["MVP", "/mvp"],
+  ["Fantasy", "/fantasy"],
+  ["Power Rankings", "/power-rankings"],
+  ["Awards History", "/awards-history"],
+];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  function closeMenus() {
+    setOpen(false);
+    setMoreOpen(false);
+  }
 
   return (
-    <header className="sticky top-0 z-50 bg-[#050B18]/80 backdrop-blur-xl border-b border-white/10">
-
+    <header className="sticky top-0 z-50 border-b border-[#D8B45A]/20 bg-[#020611]/95 backdrop-blur-xl">
       <Container>
+        <div className="flex min-h-20 items-center justify-between gap-4">
+          <Link
+            href="/"
+            onClick={closeMenus}
+            className="flex min-w-0 shrink-0 items-center gap-3"
+          >
+            <span className="relative h-12 w-12 overflow-hidden rounded-full border border-[#D8B45A]/40 bg-black">
+              <Image
+                src="/logo.jpeg"
+                alt="Viva Sports"
+                fill
+                sizes="48px"
+                className="object-cover"
+                priority
+              />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xl font-black tracking-wide text-white sm:text-2xl">
+                Viva Sports
+              </span>
+            </span>
+          </Link>
 
-        <div className="h-20 flex items-center justify-between">
+          <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-300 lg:flex">
+            {primaryLinks.map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="transition hover:text-[#F1D58A]"
+              >
+                {label}
+              </Link>
+            ))}
 
-          {/* Logo */}
-          <div>
-            <h1 className="text-3xl font-black text-white">
-              VIVA
-            </h1>
+            <div className="relative">
+              <button
+                onClick={() => setMoreOpen((value) => !value)}
+                className="inline-flex items-center gap-1 transition hover:text-[#F1D58A]"
+              >
+                More
+                <ChevronDown className="h-4 w-4" />
+              </button>
 
-            <p className="text-xs text-cyan-400 tracking-widest">
-              CRICKET TOURNAMENT
-            </p>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-
-            <Link href="/">Home</Link>
-            <Link href="/live">Live</Link>
-            <Link href="/matches">Matches</Link>
-            <Link href="/teams">Teams</Link>
-            <Link href="/pointstable">Points Table</Link>
-            <Link href="/gallery">Gallery</Link>
-            <Link href="/fixtures">Fixtures</Link>
-
+              {moreOpen && (
+                <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-64 gap-3 overflow-y-auto rounded-xl border border-[#D8B45A]/20 bg-[#07101F] p-4 shadow-2xl shadow-black/50">
+                  {secondaryLinks.map(([label, href]) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={closeMenus}
+                      className="transition hover:text-[#F1D58A]"
+                    >
+                      {label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
-          {/* Desktop Button */}
-          <div className="hidden md:block">
-            <Button>
-              LIVE NOW
-            </Button>
-          </div>
-
-          {/* Mobile Button */}
           <button
-            onClick={() => setOpen(!open)}
-            className="md:hidden text-white"
+            onClick={() => setOpen((value) => !value)}
+            className="rounded-xl border border-[#D8B45A]/25 p-2 text-white lg:hidden"
+            aria-label="Toggle navigation"
           >
-            {open ? <X size={30} /> : <Menu size={30} />}
+            {open ? <X size={26} /> : <Menu size={26} />}
           </button>
-
         </div>
-
       </Container>
 
-      {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t border-white/10 bg-[#050B18]">
-
-          <div className="flex flex-col p-6 gap-6 text-white">
-
-            <Link href="/">Home</Link>
-            <Link href="/live">Live</Link>
-            <Link href="/matches">Matches</Link>
-            <Link href="/teams">Teams</Link>
-            <Link href="/pointstable">Points Table</Link>
-            <Link href="/gallery">Gallery</Link>
-            <Link href="/fixtures">Fixtures</Link>
-
-            <Button>
-              LIVE NOW
-            </Button>
-
+        <div className="border-t border-[#D8B45A]/15 bg-[#020611] lg:hidden">
+          <div className="mx-auto grid max-w-7xl gap-2 px-4 py-5 text-white">
+            {[...primaryLinks, ...secondaryLinks].map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={closeMenus}
+                className="rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 font-semibold"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
-
         </div>
       )}
     </header>

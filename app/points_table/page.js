@@ -5,7 +5,7 @@ import PointsTablePreview from "@/components/home/PointsTablePreview";
 
 export default function PointsTablePage() {
   return (
-    <main className="min-h-screen bg-[#050B18]">
+    <main className="vs-page">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 pt-10">

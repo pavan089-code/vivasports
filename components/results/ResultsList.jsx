@@ -3,143 +3,127 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { getMatches } from "@/services/matchService";
+import { subscribeToMatches } from "@/services/matchService";
+import { sortRecentMatches } from "@/utils/tournamentUtils";
+
+function getResultText(result) {
+  if (!result) return "Result pending";
+  if (typeof result === "string") return result;
+  return result.result || "Result pending";
+}
 
 export default function ResultsList() {
   const [matches, setMatches] = useState([]);
 
   useEffect(() => {
-    async function loadMatches() {
-      const data = await getMatches();
-
-      const completedMatches = data.filter(
-        (match) => match.status === "completed",
+    const unsubscribe = subscribeToMatches((data) => {
+      const completedMatches = sortRecentMatches(
+        data.filter((match) => match.status === "completed" || match.status === "abandoned")
       );
 
       setMatches(completedMatches);
-    }
+    });
 
-    loadMatches();
+    return () => unsubscribe();
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4">
-      <h1 className="text-5xl font-black text-white mb-10">Match Results</h1>
+    <section className="max-w-7xl mx-auto py-10 px-4">
+      <div className="mb-8">
+        <p className="vs-eyebrow">
+          MATCH RESULTS
+        </p>
+        <h1 className="text-4xl md:text-5xl font-black text-white mt-2">
+          Recent Results
+        </h1>
+        <p className="text-slate-400 mt-3">
+          Completed matches, winners and final scorecards.
+        </p>
+      </div>
 
-      <div className="space-y-6">
+      <div className="grid gap-5 lg:grid-cols-2">
         {matches.map((match) => (
-          <div
+          <article
             key={match.id}
-            className="
-              bg-[#101D35]
-              rounded-3xl
-              p-6
-              border border-white/10
-            "
+            className="vs-card p-5 md:p-6"
           >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <div>
-                <h2 className="text-3xl font-bold text-white">
+                <h2 className="text-2xl md:text-3xl font-black text-white">
                   {match.teamA} vs {match.teamB}
                 </h2>
-
-                {(match.date || match.ground) && (
-                  <p className="text-slate-400 mt-2">
-                    {[match.date, match.ground].filter(Boolean).join(" • ")}
-                  </p>
-                )}
+                <p className="text-slate-400 mt-2">
+                  {[match.date, match.time, match.ground].filter(Boolean).join(" | ")}
+                </p>
               </div>
 
-              <div
-                className="
-                  bg-[#0A1428]
-                  rounded-2xl
-                  p-4
-                "
-              >
-                <div
-                  className="
-    inline-flex
-    px-4
-    py-2
-    rounded-full
-    bg-cyan-500/10
-    text-cyan-400
-    font-bold
-  "
-                >
-                  {typeof match.result === "object"
-                    ? match.result.result
-                    : match.result}
-                </div>
+              <div className="vs-card-muted p-4">
+                <p className="inline-flex rounded-full bg-[var(--vs-gold)]/10 px-4 py-2 font-bold text-[var(--vs-gold-soft)]">
+                  {getResultText(match.result)}
+                </p>
 
-                {match.winner && (
-                  <p className="text-green-400 mt-2 font-medium">
-                    Winner: {match.winner}
+                <p className="mt-3 font-semibold text-[var(--vs-success)]">
+                  Winner: {match.winner || "Tie"}
+                </p>
+
+                {match.playerOfMatch && (
+                  <p className="mt-3 font-semibold text-[var(--vs-gold-soft)]">
+                    Player of the Match: {match.playerOfMatch.playerName} (
+                    {match.playerOfMatch.teamName})
                   </p>
                 )}
 
-                <div className="mt-3 space-y-1">
-                  <p className="text-slate-300">
-                    {match.teamA} {match.firstInningsScore ?? "-"}/
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {match.resultType === "walkover" && <WarningBadge label="Walkover" />}
+                  {match.resultType === "abandoned" && <WarningBadge label="Abandoned" />}
+                  {match.revisedTargetApplied && <WarningBadge label="Revised Target" />}
+                </div>
+
+                <div className="mt-4 grid gap-2 text-slate-300 sm:grid-cols-2">
+                  <p>
+                    {match.teamA}: {match.firstInningsScore ?? "-"}/
                     {match.firstInningsWickets ?? "-"}
                   </p>
-
-                  <p className="text-slate-300">
-                    {match.teamB} {match.secondInningsScore ?? "-"}/
+                  <p>
+                    {match.teamB}: {match.secondInningsScore ?? "-"}/
                     {match.secondInningsWickets ?? "-"}
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Link
-                  href={`/live/${match.id}`}
-                  className="
-                    px-5
-                    py-3
-                    rounded-xl
-                    bg-green-500
-                    hover:bg-green-600
-                    text-white
-                    font-semibold
-                  "
+                  href={`/scorecard/${match.id}`}
+                  className="w-fit rounded-lg bg-[var(--vs-gold)] px-5 py-3 text-sm font-black uppercase text-[#050B18]"
                 >
                   View Scorecard
                 </Link>
 
-                {/* <Link
-                  href={`/scorer/${match.id}`}
-                  className="
-                    px-5
-                    py-3
-                    rounded-xl
-                    bg-cyan-500
-                    hover:bg-cyan-600
-                    text-white
-                    font-semibold
-                  "
+                <Link
+                  href={`/live/${match.id}`}
+                  className="w-fit rounded-lg border border-[var(--vs-gold)]/35 px-5 py-3 text-sm font-black uppercase text-[var(--vs-gold-soft)]"
                 >
-                  Match Details
-                </Link> */}
+                  View Match
+                </Link>
               </div>
             </div>
-          </div>
+          </article>
         ))}
-
-        {matches.length === 0 && (
-          <div
-            className="
-              bg-[#101D35]
-              rounded-3xl
-              p-8
-              text-center
-            "
-          >
-            <p className="text-slate-400 text-lg">No completed matches yet.</p>
-          </div>
-        )}
       </div>
-    </div>
+
+      {matches.length === 0 && (
+        <div className="vs-card p-8 text-center">
+          <p className="text-slate-400">No completed matches yet.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function WarningBadge({ label }) {
+  return (
+    <span className="rounded-full bg-[var(--vs-gold)]/15 px-3 py-1 text-xs font-bold text-[var(--vs-gold-soft)]">
+      {label}
+    </span>
   );
 }

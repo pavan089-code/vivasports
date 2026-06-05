@@ -2,13 +2,14 @@ import {
   collection,
   addDoc,
   getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 import {
   updateDoc,
   doc,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { db } from "@/Lib/firebase";
 
 export async function createTeam(data) {
   const docRef = await addDoc(
@@ -17,7 +18,15 @@ export async function createTeam(data) {
       played: 0,
       won: 0,
       lost: 0,
+      tied: 0,
       points: 0,
+      runsFor: 0,
+      ballsFaced: 0,
+      oversFaced: "0.0",
+      runsAgainst: 0,
+      ballsBowled: 0,
+      oversBowled: "0.0",
+      nrr: 0,
 
       createdAt: Date.now(),
 
@@ -68,5 +77,19 @@ export async function updateTeamByName(
   await updateDoc(
     doc(db, "teams", teamDoc.id),
     data
+  );
+}
+
+export function subscribeToTeams(callback) {
+  return onSnapshot(
+    collection(db, "teams"),
+    (snapshot) => {
+      callback(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+      );
+    }
   );
 }

@@ -5,7 +5,7 @@ import ResultsList from "@/components/results/ResultsList";
 
 export default function ResultsPage() {
   return (
-    <main className="bg-[#050B18] min-h-screen">
+    <main className="vs-page">
       <Navbar />
 
       <ResultsList />

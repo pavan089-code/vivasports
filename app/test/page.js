@@ -5,7 +5,7 @@ import { createMatch } from "@/services/matchService";
 export default function TestPage() {
   async function handleCreateMatch() {
     const matchId = await createMatch({
-      teamA: "VIVA Warriors",
+      teamA: "Viva Sports Warriors",
       teamB: "Royal Strikers",
       
       status: "live",
@@ -33,7 +33,7 @@ export default function TestPage() {
       
       result: null,
       
-      battingTeam: "VIVA Warriors",
+      battingTeam: "Viva Sports Warriors",
       bowlingTeam: "Royal Strikers",
       
       battingTeamPlayers: [
@@ -96,7 +96,7 @@ export default function TestPage() {
     <div className="min-h-screen bg-[#050B18] text-white p-10">
       <div className="max-w-xl mx-auto">
         <h1 className="text-4xl font-black mb-8">
-          Viva Cricket Test Match Creator
+          Viva Sports Test Match Creator
         </h1>
 
         <button

@@ -6,7 +6,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { db } from "@/Lib/firebase";
 
 export default function DashboardStats() {
   const [stats, setStats] = useState({

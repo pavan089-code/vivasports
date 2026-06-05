@@ -1,6 +1,6 @@
 import { ref, get, update } from "firebase/database";
 
-import { db } from "@/lib/firebase";
+import { db } from "@/Lib/firebase";
 
 import { calculateMatchStatus } from "./calculateMatchStatus";
 

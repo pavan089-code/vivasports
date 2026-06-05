@@ -1,24 +1,36 @@
 import type { Metadata } from "next";
 
-import { Geist, Geist_Mono } from "next/font/google";
-
 import "./globals.css";
 
 import { MatchProvider } from "../context/MatchContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "VIVA Cricket Tournament",
-  description: "Live cricket tournament platform",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://vivasports.local"),
+  title: {
+    default: "Viva Sports",
+    template: "%s | Viva Sports",
+  },
+  description: "Viva Sports live cricket tournament platform with scores, fixtures, results, standings, profiles, and broadcast tools.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/viva-sports-icon.svg",
+    apple: "/viva-sports-icon.svg",
+  },
+  applicationName: "Viva Sports",
+  openGraph: {
+    title: "Viva Sports",
+    description: "Live cricket scores, tournament standings, profiles, and broadcasts from Viva Sports.",
+    siteName: "Viva Sports",
+    type: "website",
+    images: [
+      {
+        url: "/logo.jpeg",
+        width: 1200,
+        height: 630,
+        alt: "Viva Sports",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -29,14 +41,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`
-        ${geistSans.variable}
-        ${geistMono.variable}
-        h-full
-        antialiased
-      `}
+      className="h-full antialiased"
     >
-      <body className="min-h-full bg-[#050B18] text-white">
+      <body className="min-h-full bg-[var(--vs-navy)] text-white">
 
         <MatchProvider>
           {children}

@@ -11,7 +11,7 @@ export default function Sponsors() {
 
         <SectionTitle
           title="Sponsors"
-          subtitle="Proud partners of VIVA Cricket Tournament"
+          subtitle="Proud partners of Viva Sports"
           align="center"
         />
 

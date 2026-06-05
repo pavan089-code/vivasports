@@ -2,6 +2,11 @@ export default function AdminSidebar({
   activeTab,
   setActiveTab,
 }) {
+  const operationLinks = [
+    ["Points Manager", "/admin/points-table"],
+    ["Historical Import", "/admin/historical-match"],
+    ["Audit Mode", "/admin/audit"],
+  ];
   const tabs = [
     "dashboard",
     "teams",
@@ -21,7 +26,7 @@ export default function AdminSidebar({
     >
       <div className="mb-10">
         <h2 className="text-3xl font-black text-white">
-          VIVA
+          VIVA SPORTS
         </h2>
 
         <p className="text-cyan-400 text-xs tracking-widest">
@@ -53,6 +58,21 @@ export default function AdminSidebar({
             {tab}
           </button>
         ))}
+
+        <div className="pt-6">
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+            Operations
+          </p>
+          {operationLinks.map(([label, href]) => (
+            <a
+              key={href}
+              href={href}
+              className="mb-3 flex h-12 items-center justify-center rounded-xl bg-[#101D35] text-sm font-semibold text-slate-300"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
       </nav>
     </aside>
   );

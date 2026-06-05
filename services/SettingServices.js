@@ -4,7 +4,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { db } from "@/Lib/firebase";
 
 export async function getSettings() {
   const snapshot = await getDoc(
@@ -31,6 +31,9 @@ export async function saveSettings(
       "settings",
       "tournament"
     ),
-    data
+    data,
+    {
+      merge: true,
+    }
   );
 }

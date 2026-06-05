@@ -18,7 +18,7 @@ export default function BigScoreBoard({ match }) {
               {match.score}/{match.wickets}
             </h1>
 
-            <p className="text-cyan-400 text-xl mt-3">{match.overs} Overs</p>
+            <p className="mt-3 text-xl text-[var(--vs-gold-soft)]">{match.overs} Overs</p>
           </div>
         </div>
       </div>

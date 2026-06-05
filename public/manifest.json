@@ -1,0 +1,17 @@
+{
+  "name": "Viva Sports",
+  "short_name": "Viva Sports",
+  "description": "Live sports tournament scoring, management and broadcast platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050B18",
+  "theme_color": "#050B18",
+  "icons": [
+    {
+      "src": "/viva-sports-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

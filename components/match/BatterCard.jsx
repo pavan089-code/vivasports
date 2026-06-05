@@ -20,11 +20,7 @@ export default function BatterCard({ batter, isStriker }) {
 
   return (
     <div
-      className="
-        bg-[#101D35]
-        rounded-2xl
-        p-6
-      "
+      className="vs-card p-6"
     >
       <div className="flex items-center justify-between">
         <div>
@@ -39,7 +35,7 @@ export default function BatterCard({ batter, isStriker }) {
                   w-3
                   h-3
                   rounded-full
-                  bg-cyan-400
+                  bg-[var(--vs-gold)]
                 "
               />
             )}

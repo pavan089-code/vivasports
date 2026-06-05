@@ -12,12 +12,6 @@ export default function MatchManager() {
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
 
-  const [tossWinner, setTossWinner] =
-    useState("");
-
-  const [tossDecision, setTossDecision] =
-    useState("");
-
   const [matchDate, setMatchDate] =
     useState("");
 
@@ -79,35 +73,6 @@ export default function MatchManager() {
       return;
     }
 
-    if (!tossWinner) {
-      alert("Select toss winner");
-      return;
-    }
-
-    if (!tossDecision) {
-      alert("Select Bat or Bowl");
-      return;
-    }
-
-    let battingTeam;
-    let bowlingTeam;
-
-    if (tossDecision === "bat") {
-      battingTeam = tossWinner;
-
-      bowlingTeam =
-        tossWinner === teamA
-          ? teamB
-          : teamA;
-    } else {
-      bowlingTeam = tossWinner;
-
-      battingTeam =
-        tossWinner === teamA
-          ? teamB
-          : teamA;
-    }
-
     const matchId = await createMatch({
       teamA,
       teamB,
@@ -146,21 +111,16 @@ export default function MatchManager() {
       nonStriker: null,
       currentBowler: null,
 
-      tossWinner,
-      tossDecision,
+      tossWinner: null,
+      tossDecision: null,
 
-      battingTeam,
-      bowlingTeam,
+      battingTeam: null,
+      bowlingTeam: null,
 
-      battingTeamPlayers:
-        battingTeam === teamA
-          ? selectedTeamA.players
-          : selectedTeamB.players,
-
-      bowlingTeamPlayers:
-        bowlingTeam === teamA
-          ? selectedTeamA.players
-          : selectedTeamB.players,
+      teamAPlayers: selectedTeamA.players,
+      teamBPlayers: selectedTeamB.players,
+      battingTeamPlayers: [],
+      bowlingTeamPlayers: [],
     });
 
     alert(
@@ -169,9 +129,6 @@ export default function MatchManager() {
 
     setTeamA("");
     setTeamB("");
-
-    setTossWinner("");
-    setTossDecision("");
 
     setMatchDate("");
     setMatchTime("");
@@ -250,71 +207,9 @@ export default function MatchManager() {
           ))}
         </select>
 
-        {/* TOSS WINNER */}
-        <select
-          value={tossWinner}
-          onChange={(e) =>
-            setTossWinner(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            h-14
-            px-4
-            rounded-xl
-            bg-[#101D35]
-            border border-white/10
-            text-white
-          "
-        >
-          <option value="">
-            Select Toss Winner
-          </option>
-
-          {teamA && (
-            <option value={teamA}>
-              {teamA}
-            </option>
-          )}
-
-          {teamB && (
-            <option value={teamB}>
-              {teamB}
-            </option>
-          )}
-        </select>
-
-        {/* BAT OR BOWL */}
-        <select
-          value={tossDecision}
-          onChange={(e) =>
-            setTossDecision(
-              e.target.value
-            )
-          }
-          className="
-            w-full
-            h-14
-            px-4
-            rounded-xl
-            bg-[#101D35]
-            border border-white/10
-            text-white
-          "
-        >
-          <option value="">
-            Select Decision
-          </option>
-
-          <option value="bat">
-            Bat
-          </option>
-
-          <option value="bowl">
-            Bowl
-          </option>
-        </select>
+        <p className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-4 text-sm text-cyan-200">
+          Toss is conducted by the scorer after the match starts.
+        </p>
 
         <input
           type="date"
@@ -375,7 +270,7 @@ export default function MatchManager() {
 
         <input
           type="number"
-          placeholder="Overs"
+          placeholder="Overs Per Innings"
           value={oversLimit}
           onChange={(e) =>
             setOversLimit(
@@ -392,6 +287,10 @@ export default function MatchManager() {
             text-white
           "
         />
+
+        <p className="-mt-4 text-sm text-slate-400">
+          Enter overs per innings, not total match overs.
+        </p>
 
         <input
           placeholder="YouTube Live Link"

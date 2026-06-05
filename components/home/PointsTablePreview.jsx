@@ -6,38 +6,18 @@ import Container from "../Layout/Container";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 
-import { getTeams } from "@/services/teamService";
+import { subscribeToTeams } from "@/services/teamService";
+import { rankTeams } from "@/utils/tournamentUtils";
 
 export default function PointsTablePreview() {
   const [teams, setTeams] = useState([]);
 
   useEffect(() => {
-    async function loadTeams() {
-      const data = await getTeams();
+    const unsubscribe = subscribeToTeams((data) => {
+      setTeams(rankTeams(data));
+    });
 
-      const sortedTeams = [...data].sort(
-        (a, b) => {
-          if (
-            (b.points || 0) !==
-            (a.points || 0)
-          ) {
-            return (
-              (b.points || 0) -
-              (a.points || 0)
-            );
-          }
-
-          return (
-            (b.won || 0) -
-            (a.won || 0)
-          );
-        }
-      );
-
-      setTeams(sortedTeams);
-    }
-
-    loadTeams();
+    return () => unsubscribe();
   }, []);
 
   return (
@@ -45,92 +25,66 @@ export default function PointsTablePreview() {
       <Container>
         <SectionTitle
           title="Points Table"
-          subtitle="Current tournament standings"
+          subtitle="Tournament standings ranked by points and net run rate"
         />
 
-        <Card className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+        <Card className="overflow-hidden p-0">
+          <div className="vs-table-wrap border-0">
+          <table className="vs-table min-w-[860px]">
             <thead>
-              <tr
-                className="
-                  border-b
-                  border-white/10
-                  text-slate-400
-                  text-sm
-                "
-              >
-                <th className="text-left py-4">
-                  #
-                </th>
-
-                <th className="text-left py-4">
-                  Team
-                </th>
-
+              <tr>
+                <th>#</th>
+                <th>Team</th>
                 <th>P</th>
-
                 <th>W</th>
-
                 <th>L</th>
-
+                <th>T</th>
                 <th>PTS</th>
+                <th>RF</th>
+                <th>OF</th>
+                <th>RA</th>
+                <th>OB</th>
+                <th>NRR</th>
               </tr>
             </thead>
 
             <tbody>
-              {teams.map(
-                (team, index) => (
-                  <tr
-                    key={team.id}
-                    className="
-                      border-b
-                      border-white/5
-                      text-white
-                    "
+              {teams.map((team, index) => (
+                <tr
+                  key={team.id}
+                  className="text-center"
+                >
+                  <td className="py-4 text-left">{index + 1}</td>
+                  <td className="py-4 text-left font-semibold">{team.name}</td>
+                  <td>{team.played || 0}</td>
+                  <td className="text-[var(--vs-success)]">{team.won || 0}</td>
+                  <td className="text-[var(--vs-danger)]">{team.lost || 0}</td>
+                  <td className="text-[var(--vs-gold-soft)]">{team.tied || 0}</td>
+                  <td className="font-bold text-[var(--vs-gold-soft)]">{team.points || 0}</td>
+                  <td>{team.runsFor || 0}</td>
+                  <td>{team.oversFaced || "0.0"}</td>
+                  <td>{team.runsAgainst || 0}</td>
+                  <td>{team.oversBowled || "0.0"}</td>
+                  <td
+                    className={
+                      (team.nrr || 0) >= 0 ? "text-[var(--vs-success)]" : "text-[var(--vs-danger)]"
+                    }
                   >
-                    <td className="py-4">
-                      {index + 1}
-                    </td>
-
-                    <td className="py-4 font-semibold">
-                      {team.name}
-                    </td>
-
-                    <td className="text-center">
-                      {team.played || 0}
-                    </td>
-
-                    <td className="text-center text-green-400">
-                      {team.won || 0}
-                    </td>
-
-                    <td className="text-center text-red-400">
-                      {team.lost || 0}
-                    </td>
-
-                    <td className="text-center font-bold text-cyan-400">
-                      {team.points || 0}
-                    </td>
-                  </tr>
-                )
-              )}
+                    {(team.nrr || 0).toFixed(3)}
+                  </td>
+                </tr>
+              ))}
 
               {teams.length === 0 && (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="
-                      text-center
-                      py-10
-                      text-slate-400
-                    "
-                  >
+                  <td colSpan="12" className="py-10 text-center text-slate-400">
                     No teams found
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </Card>
       </Container>
     </section>

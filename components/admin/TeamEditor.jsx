@@ -3,37 +3,49 @@
 import { useState } from "react";
 import { updateTeam } from "@/services/teamService";
 
+function normalizeRoster(players, captain) {
+  return [captain, ...players]
+    .map((player) => (player || "").trim())
+    .filter(Boolean)
+    .filter(
+      (player, index, all) =>
+        all.findIndex((item) => item.toLowerCase() === player.toLowerCase()) === index
+    );
+}
+
 export default function TeamEditor({ team, onRefresh, onDelete }) {
   const [editing, setEditing] = useState(false);
-
   const [name, setName] = useState(team.name);
-
-  const [captain, setCaptain] = useState(team.captain);
-
+  const [captain, setCaptain] = useState(team.captain || "");
   const [logo, setLogo] = useState(team.logo || "");
-
   const [players, setPlayers] = useState(team.players || []);
-
   const [newPlayer, setNewPlayer] = useState("");
 
   function addPlayer() {
-    if (!newPlayer.trim()) return;
+    const playerName = newPlayer.trim();
+    if (!playerName) return;
 
     if (players.length >= 15) {
       alert("Maximum 15 players allowed");
       return;
     }
-    if (players.some((p) => p.toLowerCase() === newPlayer.toLowerCase())) {
+
+    if (players.some((player) => player.toLowerCase() === playerName.toLowerCase())) {
       alert("Player already exists");
       return;
     }
-    setPlayers([...players, newPlayer.trim()]);
 
+    setPlayers([...players, playerName]);
     setNewPlayer("");
   }
 
   function removePlayer(player) {
-    setPlayers(players.filter((p) => p !== player));
+    if (player.toLowerCase() === captain.trim().toLowerCase()) {
+      alert("Captain must remain in the squad. Change captain before removing this player.");
+      return;
+    }
+
+    setPlayers(players.filter((item) => item !== player));
   }
 
   async function handleSave() {
@@ -42,171 +54,94 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
       return;
     }
 
-    if (players.length < 11) {
-      const proceed = confirm(
-        `This team only has ${players.length} players. Save anyway?`,
-      );
+    const roster = normalizeRoster(players, captain);
 
+    if (roster.length < 11) {
+      const proceed = confirm(`This team only has ${roster.length} players. Save anyway?`);
       if (!proceed) return;
     }
 
     await updateTeam(team.id, {
       name,
-      captain,
+      captain: captain.trim(),
       logo,
-      players,
+      players: roster,
     });
 
+    setPlayers(roster);
     setEditing(false);
-
     onRefresh();
   }
-  <div className="flex justify-between items-center">
-  <h3 className="text-white font-bold">
-    Edit Team
-  </h3>
 
-  <button
-    onClick={() =>
-      setEditing(false)
-    }
-    className="
-      text-slate-400
-      hover:text-white
-    "
-  >
-    ✕
-  </button>
-</div>
- if (!editing) {
-  return (
-    <div className="flex gap-3 mt-6">
-      <button
-        onClick={() =>
-          setEditing(true)
-        }
-        className="
-          px-4
-          py-2
-          rounded-xl
-          bg-yellow-500
-          text-white
-        "
-      >
-        Edit
-      </button>
+  if (!editing) {
+    return (
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={() => setEditing(true)}
+          className="px-4 py-2 rounded-xl bg-yellow-500 text-white"
+        >
+          Edit
+        </button>
 
-      <button
-        onClick={onDelete}
-        className="
-          px-4
-          py-2
-          rounded-xl
-          bg-red-500
-          text-white
-        "
-      >
-        Delete
-      </button>
-    </div>
-  );
-}
+        <button
+          onClick={onDelete}
+          className="px-4 py-2 rounded-xl bg-red-500 text-white"
+        >
+          Delete
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="
-      mt-6
-      p-5
-      rounded-2xl
-      bg-[#101D35]
-      border
-      border-white/10
-      space-y-4
-    "
-    >
+    <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-[#101D35] p-5">
       <div>
         <label className="block text-slate-400 mb-2">Team Name</label>
-
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(event) => setName(event.target.value)}
           placeholder="Team Name"
-          className="
-          w-full
-          h-12
-          px-3
-          rounded-lg
-          bg-[#101D35]
-          text-white
-        "
+          className="h-12 w-full rounded-lg bg-[#0A1428] px-3 text-white"
         />
       </div>
 
       <div>
         <label className="block text-slate-400 mb-2">Captain</label>
-
         <input
           value={captain}
-          onChange={(e) => setCaptain(e.target.value)}
+          onChange={(event) => setCaptain(event.target.value)}
           placeholder="Captain"
-          className="
-          w-full
-          h-12
-          px-3
-          rounded-lg
-          bg-[#101D35]
-          text-white
-        "
+          className="h-12 w-full rounded-lg bg-[#0A1428] px-3 text-white"
         />
+        <p className="mt-2 text-sm text-slate-500">
+          Captain is automatically kept in the squad.
+        </p>
       </div>
 
       <input
         value={logo}
-        onChange={(e) => setLogo(e.target.value)}
+        onChange={(event) => setLogo(event.target.value)}
         placeholder="Logo URL"
-        className="
-          w-full
-          h-12
-          px-3
-          rounded-lg
-          bg-[#101D35]
-          text-white
-        "
+        className="h-12 w-full rounded-lg bg-[#0A1428] px-3 text-white"
       />
 
       <div>
-        <h4 className="text-white font-bold mb-3">
-          Players ({players.length})
-        </h4>
+        <h4 className="text-white font-bold mb-3">Players ({normalizeRoster(players, captain).length})</h4>
 
-        <div
-          className="
-    space-y-2
-    max-h-56
-    overflow-y-auto
-  "
-        >
-          {players.map((player) => (
+        <div className="max-h-56 space-y-2 overflow-y-auto">
+          {normalizeRoster(players, captain).map((player) => (
             <div
               key={player}
-              className="
-                flex
-                justify-between
-                items-center
-                bg-[#101D35]
-                rounded-lg
-                px-3
-                py-2
-              "
+              className="flex items-center justify-between rounded-lg bg-[#0A1428] px-3 py-2"
             >
-              <span className="text-white">{player}</span>
+              <span className="text-white">
+                {player}
+                {player.toLowerCase() === captain.trim().toLowerCase() && (
+                  <span className="ml-2 text-xs font-bold text-cyan-300">Captain</span>
+                )}
+              </span>
 
-              <button
-                onClick={() => removePlayer(player)}
-                className="
-                  text-red-400
-                "
-              >
+              <button onClick={() => removePlayer(player)} className="text-red-400">
                 Remove
               </button>
             </div>
@@ -217,58 +152,22 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
       <div className="flex gap-2 items-center">
         <input
           value={newPlayer}
-          onChange={(e) => setNewPlayer(e.target.value)}
+          onChange={(event) => setNewPlayer(event.target.value)}
           placeholder="Player Name"
-          className="
-  flex-1
-  h-12
-  px-3
-  rounded-xl
-  bg-[#0A1428]
-  border
-  border-white/10
-  text-white
-"
+          className="h-12 flex-1 rounded-xl border border-white/10 bg-[#0A1428] px-3 text-white"
         />
 
-        <button
-          onClick={addPlayer}
-          className="
-            px-4
-            rounded-lg
-            bg-cyan-500
-            text-white
-          "
-        >
+        <button onClick={addPlayer} className="rounded-lg bg-cyan-500 px-4 py-3 text-white">
           Add
         </button>
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button
-          onClick={handleSave}
-          className="
-      px-5
-      py-3
-      rounded-xl
-      bg-green-500
-      text-white
-      font-bold
-    "
-        >
+        <button onClick={handleSave} className="rounded-xl bg-green-500 px-5 py-3 font-bold text-white">
           Save Changes
         </button>
 
-        <button
-          onClick={() => setEditing(false)}
-          className="
-      px-5
-      py-3
-      rounded-xl
-      bg-slate-600
-      text-white
-    "
-        >
+        <button onClick={() => setEditing(false)} className="rounded-xl bg-slate-600 px-5 py-3 text-white">
           Cancel
         </button>
       </div>

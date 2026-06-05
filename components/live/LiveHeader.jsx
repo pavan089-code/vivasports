@@ -10,7 +10,7 @@ export default function LiveHeader() {
         </h1>
 
         <p className="text-slate-400 mt-2">
-          VIVA Cricket Tournament
+          Viva Sports Tournament
         </p>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db } from "@/Lib/firebase";
 import TeamEditor from "@/components/admin/TeamEditor";
 
 export default function TeamList() {
@@ -26,7 +26,7 @@ export default function TeamList() {
   }
 
   useEffect(() => {
-    loadTeams();
+    Promise.resolve().then(loadTeams);
   }, []);
 
   return (

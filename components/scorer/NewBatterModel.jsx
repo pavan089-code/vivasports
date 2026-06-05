@@ -1,5 +1,6 @@
 export default function NewBatterModal({
   open,
+  title = "Select New Batter",
   players,
   currentStriker,
   currentNonStriker,
@@ -33,7 +34,7 @@ export default function NewBatterModal({
       >
 
         <h2 className="text-3xl font-black text-white mb-8">
-          Select New Batter
+          {title}
         </h2>
 
         <div className="grid grid-cols-2 gap-4">
