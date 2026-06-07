@@ -87,6 +87,12 @@ const itemVariants = {
   },
 };
 
+const overlayEventStyles = {
+  FOUR: "border-cyan-200/75 bg-cyan-500/90 text-white shadow-cyan-950/60",
+  SIX: "border-emerald-200/75 bg-emerald-500/90 text-white shadow-emerald-950/60",
+  WICKET: "border-red-200/80 bg-red-600/92 text-white shadow-red-950/70",
+};
+
 function normalizeType(type) {
   if (type === "FIFTY" || type === "50") return "HALF CENTURY";
   if (type === "HUNDRED" || type === "100") return "CENTURY";
@@ -95,13 +101,51 @@ function normalizeType(type) {
   return type || "";
 }
 
-export default function EventAnimation({ event }) {
+export default function EventAnimation({ event, variant = "default" }) {
   const type = normalizeType(event?.type);
   const copy = eventCopy[type] || {
     kicker: "Match Event",
     title: event?.title || type,
   };
   const variants = type === "WICKET" ? wicketVariants : shellVariants;
+
+  if (variant === "overlay") {
+    const eventStyle = overlayEventStyles[type] || "border-cyan-200/70 bg-[#06111F]/92 text-white shadow-black/55";
+
+    return (
+      <AnimatePresence>
+        {event && (
+          <motion.div
+            className="pointer-events-none absolute inset-x-0 bottom-[15vh] z-40 flex justify-center px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <motion.section
+              initial={{ y: 34, opacity: 0, scale: 0.98 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -22, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+              className={`min-w-64 overflow-hidden rounded-xl border px-9 py-4 text-center shadow-2xl backdrop-blur-xl ${eventStyle}`}
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.34em] text-white/80">
+                {copy.kicker}
+              </p>
+              <h2 className="mt-1 text-5xl font-black uppercase tracking-wide text-white">
+                {copy.title}
+              </h2>
+              {event.subtitle && (
+                <p className="mt-1 text-sm font-black uppercase tracking-wide text-slate-200">
+                  {event.subtitle}
+                </p>
+              )}
+            </motion.section>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
 
   return (
     <AnimatePresence>

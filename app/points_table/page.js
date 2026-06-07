@@ -3,6 +3,15 @@ import Footer from "@/components/Layout/Footer";
 
 import PointsTablePreview from "@/components/home/PointsTablePreview";
 
+export const metadata = {
+  title: "Cricket Points Table",
+  description:
+    "View the Viva Sports cricket points table with team rankings, points, matches played and net run rate.",
+  alternates: {
+    canonical: "/points-table",
+  },
+};
+
 export default function PointsTablePage() {
   return (
     <main className="vs-page">

@@ -259,6 +259,8 @@ export default function TournamentPortal() {
           upcoming={upcomingMatches.length}
         />
 
+        <SeoOverviewSection />
+
         <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="space-y-5">
             <SectionHeader
@@ -612,6 +614,65 @@ function SnapshotSection({ teams, matches, completed, live, upcoming }) {
           <p className="mt-3 text-4xl font-black">{value}</p>
         </div>
       ))}
+    </section>
+  );
+}
+
+function SeoOverviewSection() {
+  const highlights = [
+    {
+      title: "Live Cricket Scores",
+      body: "Follow ball-by-ball cricket live scores, match status, required runs, overs and scorecards from the Viva Sports live match centre.",
+    },
+    {
+      title: "Cricket Tournament Management",
+      body: "Manage tournament fixtures, teams, players, results, standings and match reports from one professional cricket tournament platform.",
+    },
+    {
+      title: "Fixtures",
+      body: "Browse upcoming cricket fixtures with team matchups, venues, dates and schedule updates for every Viva Sports tournament.",
+    },
+    {
+      title: "Results",
+      body: "Track completed match results, winners, score summaries and player of the match highlights as soon as games finish.",
+    },
+    {
+      title: "Points Table",
+      body: "View the cricket points table with played matches, points, net run rate and team rankings updated throughout the competition.",
+    },
+    {
+      title: "Live Streaming",
+      body: "Connect cricket live streaming and broadcast overlays with match scoring so fans can watch and follow the tournament in real time.",
+    },
+  ];
+
+  return (
+    <section className="rounded-2xl border border-[#D8B45A]/15 bg-[#07101F] p-5 sm:p-7">
+      <div className="max-w-3xl">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#D8B45A]">
+          Viva Sports India
+        </p>
+        <h2 className="mt-3 text-3xl font-black text-white">
+          Cricket live scores, fixtures, results and tournament operations
+        </h2>
+        <p className="mt-4 leading-7 text-slate-300">
+          Viva Sports brings cricket tournament management, live scoring,
+          points tables, player statistics, match administration and streaming
+          tools together for organizers, scorers, teams and fans.
+        </p>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {highlights.map((item) => (
+          <article
+            key={item.title}
+            className="rounded-xl border border-white/10 bg-black/20 p-4"
+          >
+            <h2 className="text-xl font-black text-white">{item.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{item.body}</p>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

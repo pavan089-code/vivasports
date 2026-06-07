@@ -1,53 +1,75 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 import EventAnimation from "@/components/broadcast/EventAnimation";
 import useMatch from "@/hooks/useMatch";
-import { getPlayerStats } from "@/services/playerStatsService";
-import { getSponsorsByCategory, subscribeToBroadcastSettings } from "@/services/broadcastService";
-import { subscribeToMatches } from "@/services/matchService";
+import { subscribeToBroadcastSettings } from "@/services/broadcastService";
 import {
-  buildTickerItems,
-  getGraphicText,
   getLatestEvent,
-  getRequiredBalls,
+  getNeedLine,
   getRequiredRate,
-  getRequiredRuns,
   getRunRate,
 } from "@/utils/broadcastUtils";
 
-const themeClasses = {
-  classic: {
-    panel: "border-white/20 bg-[#06101F]/88",
-    accent: "text-white",
-    bar: "bg-white text-[#050B18]",
-    label: "text-slate-300",
-  },
-  modern: {
-    panel: "border-[#D8B45A]/25 bg-[#07101F]/90",
-    accent: "text-[#F1D58A]",
-    bar: "bg-[#07101F] text-white",
-    label: "text-slate-300",
-  },
-  premium_gold: {
-    panel: "border-[#D8B45A]/45 bg-[#020611]/92",
-    accent: "text-[#F1D58A]",
-    bar: "bg-[#D8B45A] text-[#050B18]",
-    label: "text-slate-300",
-  },
+const ballStyles = {
+  ".": "border-slate-500/60 bg-slate-500/35 text-white",
+  "0": "border-slate-500/60 bg-slate-500/35 text-white",
+  "1": "border-blue-400/70 bg-blue-500/45 text-white",
+  "2": "border-blue-400/70 bg-blue-500/45 text-white",
+  "3": "border-blue-400/70 bg-blue-500/45 text-white",
+  "4": "border-cyan-300/80 bg-cyan-500/55 text-white",
+  "6": "border-emerald-300/80 bg-emerald-500/60 text-white",
+  W: "border-red-300/85 bg-red-500/70 text-white",
+  WD: "border-yellow-200/85 bg-yellow-400/75 text-[#06111F]",
+  NB: "border-orange-200/85 bg-orange-500/75 text-white",
+  LB: "border-purple-200/85 bg-purple-500/65 text-white",
+  B: "border-purple-200/85 bg-purple-500/65 text-white",
 };
 
-export default function BroadcastLiveOverlay({ matchId }) {
-  const { match, loading } = useMatch(matchId);
-  const [settings, setSettings] = useState(null);
-  const [matches, setMatches] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [sponsorIndex, setSponsorIndex] = useState(0);
+const defaultSettings = {
+  overlayVisible: true,
+  graphicsVisible: true,
+};
+
+const demoMatch = {
+  id: "demo",
+  tournamentName: "Viva Sports T20 Cup",
+  matchNumber: "12",
+  ground: "Sarojini Ground",
+  status: "live",
+  teamA: "Thunder Strikers",
+  teamB: "Royal Challengers",
+  battingTeam: "Thunder Strikers",
+  bowlingTeam: "Royal Challengers",
+  score: 124,
+  wickets: 4,
+  overs: "14.2",
+  totalBalls: 86,
+  innings: 2,
+  target: 157,
+  oversLimit: 20,
+  striker: { name: "Vijay Chandra", runs: 42, balls: 31 },
+  nonStriker: { name: "Ajay Chavan", runs: 17, balls: 14 },
+  currentBowler: { name: "Venu Chandran", wickets: 2, runs: 18, balls: 20 },
+  currentOver: ["1", ".", "4", "W", "1", "2"],
+  commentary: [
+    { label: "1", isLegalDelivery: true, createdAt: 1 },
+    { label: "0", isLegalDelivery: true, createdAt: 2 },
+    { label: "4", isLegalDelivery: true, batterRuns: 4, striker: "Vijay Chandra", bowler: "Venu Chandran", createdAt: 3 },
+    { label: "W", type: "wicket", isLegalDelivery: true, striker: "Vijay Chandra", bowler: "Venu Chandran", createdAt: 4 },
+    { label: "1", isLegalDelivery: true, createdAt: 5 },
+    { label: "2", isLegalDelivery: true, createdAt: 6 },
+  ],
+};
+
+export default function BroadcastLiveOverlay({ matchId, demo = false }) {
+  const { match: liveMatch, loading } = useOverlayMatch(matchId, demo);
+  const [settings, setSettings] = useState(() => (demo ? defaultSettings : null));
   const [event, setEvent] = useState(null);
   const lastEventKey = useRef("");
+  const match = demo ? demoMatch : liveMatch;
 
   useEffect(() => {
     document.documentElement.classList.add("broadcast-transparent-body");
@@ -60,36 +82,13 @@ export default function BroadcastLiveOverlay({ matchId }) {
   }, []);
 
   useEffect(() => {
-    const unsubscribeSettings = subscribeToBroadcastSettings(setSettings);
-    const unsubscribeMatches = subscribeToMatches(setMatches);
+    if (demo) return undefined;
 
-    getPlayerStats().then(setPlayers).catch(() => setPlayers([]));
-
-    return () => {
-      unsubscribeSettings();
-      unsubscribeMatches();
-    };
-  }, []);
-
-  const sponsors = useMemo(
-    () => getSponsorsByCategory(settings, settings?.activeSponsorCategory || "all"),
-    [settings]
-  );
+    return subscribeToBroadcastSettings(setSettings);
+  }, [demo]);
 
   useEffect(() => {
-    if (!settings?.sponsorRotation || sponsors.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setSponsorIndex((index) => (index + 1) % sponsors.length);
-    }, Math.max(settings.sponsorInterval || 8, 2) * 1000);
-
-    return () => clearInterval(interval);
-  }, [settings?.sponsorInterval, settings?.sponsorRotation, sponsors.length]);
-
-  useEffect(() => {
-    if (!match || !settings?.graphicsVisible) {
-      return;
-    }
+    if (!match || !settings?.graphicsVisible) return;
 
     const latest = settings?.manualGraphic
       ? {
@@ -103,8 +102,9 @@ export default function BroadcastLiveOverlay({ matchId }) {
 
     lastEventKey.current = latest.key || `${latest.type}-${latest.title}-${latest.subtitle}`;
 
+    const eventDuration = latest.type === "WICKET" ? 3000 : 2000;
     const showTimeout = setTimeout(() => setEvent(latest), 0);
-    const hideTimeout = setTimeout(() => setEvent(null), 4600);
+    const hideTimeout = setTimeout(() => setEvent(null), eventDuration);
 
     return () => {
       clearTimeout(showTimeout);
@@ -112,249 +112,319 @@ export default function BroadcastLiveOverlay({ matchId }) {
     };
   }, [match, settings?.graphicsVisible, settings?.manualGraphic, settings?.updatedAt]);
 
-  const tickerItems = useMemo(
-    () =>
-      buildTickerItems({
-        matches,
-        players,
-        sponsors,
-        sections: settings?.tickerSections,
-      }),
-    [matches, players, sponsors, settings?.tickerSections]
-  );
-
   if (loading || !match || !settings?.overlayVisible) return null;
-
-  const theme = themeClasses[settings.overlayTheme] || themeClasses.premium_gold;
-  const currentSponsor = sponsors[sponsorIndex % Math.max(sponsors.length, 1)] || null;
-  const graphicType = settings.liveGraphic?.type || settings.matchGraphic?.type;
-  const graphicVisible =
-    settings.graphicsVisible &&
-    (settings.liveGraphic?.visible || settings.matchGraphic?.visible);
-  const graphic = graphicVisible ? getGraphicText(match, graphicType) : null;
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-transparent font-sans text-white">
-      <Scorebug match={match} theme={theme} />
-
-      <OperationsBug match={match} theme={theme} />
-
-      {settings.graphicsVisible && event && <EventAnimation event={event} />}
-
-      {settings.graphicsVisible && settings.lowerThird?.visible && (
-        <LowerThird lowerThird={settings.lowerThird} theme={theme} />
+      {settings.graphicsVisible && event && (
+        <EventAnimation event={event} variant="overlay" />
       )}
 
-      {graphic && <MatchGraphic graphic={graphic} theme={theme} />}
-
-      {currentSponsor && <SponsorBug sponsor={currentSponsor} theme={theme} />}
-
-      {settings.tickerVisible && <Ticker items={tickerItems} theme={theme} />}
+      <Scorebar match={match} />
     </main>
   );
 }
 
-function Scorebug({ match, theme }) {
+function useOverlayMatch(matchId, demo) {
+  return useMatch(demo ? null : matchId);
+}
+
+const Scorebar = memo(function Scorebar({ match }) {
+  const model = useMemo(() => buildScorebarModel(match), [match]);
+
   return (
-    <section
-      className={`absolute left-8 top-8 min-w-[980px] overflow-hidden rounded-xl border shadow-2xl backdrop-blur-md ${theme.panel}`}
-    >
-      <div className="grid grid-cols-[320px_1fr]">
-        <div className="border-r border-white/10 px-6 py-5">
-          <p className={`text-xs font-black uppercase tracking-[0.28em] ${theme.accent}`}>
-            {match.battingTeam || "Batting Team"}
-          </p>
-          <div className="mt-2 flex items-end gap-3">
-            <p className="text-6xl font-black leading-none">
-              {match.score ?? 0}/{match.wickets ?? 0}
-            </p>
-            <p className="pb-2 text-2xl font-black text-slate-300">
-              {match.overs || "0.0"}
-            </p>
-          </div>
+    <section className="absolute inset-x-0 bottom-0 px-2 pb-2 sm:px-4 sm:pb-3 lg:px-5 lg:pb-4">
+      <div className="mx-auto w-full overflow-hidden rounded-xl border border-white/15 bg-[#06111F]/90 shadow-2xl shadow-black/55 backdrop-blur-xl will-change-transform">
+        <div className="grid min-h-6 grid-cols-[minmax(118px,0.1fr)_1fr_auto] items-center gap-3 border-b border-white/10 bg-black/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300 sm:px-4">
+          <BrandMark />
+          <TournamentStrip meta={model.meta} />
+          <StatusBadge status={model.status} />
         </div>
 
-        <div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] gap-4 px-6 py-5">
-          <PlayerLine
-            label="Batters"
-            primary={match.striker?.name || "-"}
-            secondary={match.nonStriker?.name || "-"}
-            theme={theme}
-          />
-          <PlayerLine
-            label="Bowler"
-            primary={match.currentBowler?.name || "-"}
-            secondary={`${match.currentBowler?.wickets || 0}/${match.currentBowler?.runs || 0}`}
-            theme={theme}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <MiniStat label="CRR" value={getRunRate(match.score || 0, match.totalBalls || 0)} />
-            <MiniStat label="RRR" value={getRequiredRate(match)} />
-            <MiniStat label="Req Runs" value={getRequiredRuns(match)} />
-            <MiniStat label="Req Balls" value={getRequiredBalls(match)} />
-          </div>
+        <div className="grid min-h-[76px] grid-cols-[minmax(210px,0.72fr)_minmax(420px,1.45fr)_minmax(178px,0.48fr)] items-stretch divide-x divide-white/10 max-md:grid-cols-[minmax(185px,0.82fr)_minmax(280px,1fr)] max-md:divide-y max-md:divide-x-0 max-sm:grid-cols-1">
+          <TeamScoreBlock team={model.team} score={model.score} wickets={model.wickets} overs={model.overs} />
+          <PlayerArea striker={model.striker} nonStriker={model.nonStriker} bowler={model.bowler} metrics={model.metrics} />
+          <BallTracker balls={model.lastSix} />
         </div>
       </div>
     </section>
   );
-}
+});
 
-function PlayerLine({ label, primary, secondary, theme }) {
+const BrandMark = memo(function BrandMark() {
   return (
-    <div>
-      <p className={`text-xs font-bold uppercase tracking-[0.18em] ${theme.label}`}>
-        {label}
-      </p>
-      <p className="mt-2 truncate text-2xl font-black">{primary}</p>
-      <p className={`mt-1 truncate text-lg font-bold ${theme.accent}`}>{secondary}</p>
-    </div>
-  );
-}
-
-function MiniStat({ label, value }) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-xl font-black text-white">{value}</p>
-    </div>
-  );
-}
-
-function OperationsBug({ match, theme }) {
-  const latestNote = (match.matchNotes || []).slice(-1)[0];
-
-  if (!latestNote && !match.revisedTargetApplied && !["paused", "innings_break", "completed"].includes(match.status)) {
-    return null;
-  }
-
-  return (
-    <section
-      className={`absolute left-8 top-48 max-w-3xl rounded-xl border px-6 py-4 shadow-2xl backdrop-blur-md ${theme.panel}`}
-    >
-      {match.status === "paused" && (
-        <p className={`text-2xl font-black ${theme.accent}`}>
-          MATCH PAUSED: {match.pauseReason || "Delay"}
-        </p>
-      )}
-
-      {match.status === "innings_break" && (
-        <p className={`text-2xl font-black ${theme.accent}`}>
-          INNINGS BREAK: Target {match.target || "-"}
-        </p>
-      )}
-
-      {match.status === "completed" && (
-        <p className={`text-2xl font-black ${theme.accent}`}>
-          MATCH RESULT: {match.winner || "Result pending"}
-        </p>
-      )}
-
-      {match.revisedTargetApplied && (
-        <p className="mt-2 text-xl font-black text-white">
-          Target Revised: {match.revisedTarget} from {match.revisedOvers} overs
-        </p>
-      )}
-
-      {latestNote && (
-        <p className="mt-2 text-lg font-bold text-white">{latestNote.text}</p>
-      )}
-    </section>
-  );
-}
-
-function SponsorBug({ sponsor, theme }) {
-  return (
-    <a
-      href={sponsor.link || undefined}
-      className={`absolute right-8 top-8 flex min-w-72 items-center gap-4 rounded-xl border px-5 py-3 shadow-2xl backdrop-blur-md ${theme.panel}`}
-    >
-      {sponsor.logo ? (
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-cyan-300/45 bg-black">
         <Image
-          src={sponsor.logo}
-          alt={sponsor.name}
-          width={64}
-          height={48}
-          unoptimized
-          className="h-12 w-16 rounded-md object-contain"
+          src="/logo.jpeg"
+          alt="Viva Sports"
+          fill
+          sizes="24px"
+          className="object-cover"
+          priority
         />
-      ) : (
-        <div className="flex h-12 w-16 items-center justify-center rounded-md border border-[#D8B45A]/35 bg-black/25 text-xs font-black text-[#F1D58A]">
-          VS
-        </div>
-      )}
-      <div>
-        <p className={`text-xs font-bold uppercase tracking-[0.18em] ${theme.accent}`}>
-          {sponsor.category || "Sponsor"}
+      </span>
+      <span className="truncate text-white">Viva Sports</span>
+    </div>
+  );
+});
+
+const TournamentStrip = memo(function TournamentStrip({ meta }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+      {meta.map((item) => (
+        <span key={item} className="truncate first:text-cyan-200">
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+});
+
+const StatusBadge = memo(function StatusBadge({ status }) {
+  const label = formatStatus(status);
+  const tone = getStatusTone(status);
+
+  return (
+    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${tone}`}>
+      {label}
+    </span>
+  );
+});
+
+const TeamScoreBlock = memo(function TeamScoreBlock({ team, score, wickets, overs }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-[#071826]/70 px-4 py-2.5 sm:px-5">
+      <div className="min-w-0">
+        <h1 className="truncate text-xl font-black uppercase leading-tight text-white sm:text-2xl lg:text-3xl">
+          {team}
+        </h1>
+        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+          Batting
         </p>
-        <p className="text-xl font-black">{sponsor.name}</p>
       </div>
-    </a>
-  );
-}
-
-function LowerThird({ lowerThird, theme }) {
-  return (
-    <section
-      className={`absolute bottom-28 left-8 min-w-[520px] rounded-xl border px-8 py-5 shadow-2xl backdrop-blur-md ${theme.panel}`}
-    >
-      <p className={`text-xs font-black uppercase tracking-[0.28em] ${theme.accent}`}>
-        Viva Sports
-      </p>
-      <p className="mt-2 text-4xl font-black">{lowerThird.playerName || "PLAYER"}</p>
-      <p className={`mt-2 text-xl font-bold ${theme.accent}`}>{lowerThird.line1}</p>
-      <p className="text-lg text-slate-300">{lowerThird.line2}</p>
-    </section>
-  );
-}
-
-function MatchGraphic({ graphic, theme }) {
-  return (
-    <section
-      className={`absolute right-8 top-36 max-w-3xl rounded-2xl border p-8 text-right shadow-2xl backdrop-blur-md ${theme.panel}`}
-    >
-      <p className={`text-sm font-black uppercase tracking-[0.28em] ${theme.accent}`}>
-        Match Graphic
-      </p>
-      <p className="mt-2 text-5xl font-black text-white">{graphic.title}</p>
-      <div className="mt-6 space-y-3">
-        {graphic.lines.map((line) => (
-          <p key={line} className="text-2xl font-bold leading-snug text-slate-100">
-            {line}
-          </p>
-        ))}
+      <div className="text-right">
+        <p className="whitespace-nowrap text-3xl font-black leading-none text-white sm:text-4xl">
+          {score}/{wickets}
+        </p>
+        <p className="mt-1 whitespace-nowrap text-xs font-black uppercase tracking-wide text-slate-300 sm:text-sm">
+          ({overs} Ov)
+        </p>
       </div>
-    </section>
+    </div>
   );
-}
+});
 
-function Ticker({ items, theme }) {
-  if (!items.length) return null;
-
+const PlayerArea = memo(function PlayerArea({ striker, nonStriker, bowler, metrics }) {
   return (
-    <section className={`absolute bottom-0 left-0 right-0 overflow-hidden ${theme.bar}`}>
-      <div className="broadcast-ticker flex w-max gap-12 px-8 py-3 text-xl font-black">
-        {[...items, ...items].map((item, index) => (
-          <span key={`${item}-${index}`} className="whitespace-nowrap">
-            {item}
+    <div className="grid grid-rows-[1fr_auto] px-4 py-2 sm:px-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(128px,0.7fr)] items-center gap-4 max-sm:grid-cols-1">
+        <BatterLine player={striker} striker />
+        <BatterLine player={nonStriker} />
+        <BowlerLine bowler={bowler} />
+      </div>
+      <StatusStrip metrics={metrics} />
+    </div>
+  );
+});
+
+const BatterLine = memo(function BatterLine({ player, striker = false }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+        {striker ? "Batter" : "Batter"}
+      </p>
+      <p className="mt-1 truncate text-lg font-black uppercase leading-tight text-white sm:text-xl">
+        {player.name}
+        {striker && <span className="ml-1 text-cyan-300">*</span>}
+      </p>
+      <p className="text-sm font-black text-cyan-100 sm:text-base">
+        {player.runs} ({player.balls})
+      </p>
+    </div>
+  );
+});
+
+const BowlerLine = memo(function BowlerLine({ bowler }) {
+  return (
+    <div className="min-w-0 text-right max-sm:text-left">
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+        Bowler
+      </p>
+      <p className="mt-1 truncate text-lg font-black uppercase leading-tight text-white sm:text-xl">
+        {bowler.name}
+      </p>
+      <p className="text-sm font-black text-cyan-100 sm:text-base">
+        {bowler.wickets}-{bowler.runs}
+        <span className="ml-2 text-slate-300">{bowler.overs} Ov</span>
+      </p>
+    </div>
+  );
+});
+
+const StatusStrip = memo(function StatusStrip({ metrics }) {
+  return (
+    <div className="mt-2 flex items-center gap-4 border-t border-white/10 pt-2 text-xs font-black uppercase tracking-wide text-white sm:text-sm">
+      <Metric label="CRR" value={metrics.crr} />
+      {metrics.rrr && <Metric label="RRR" value={metrics.rrr} />}
+      <p className="min-w-0 truncate text-cyan-100">{metrics.need || metrics.status}</p>
+    </div>
+  );
+});
+
+const BallTracker = memo(function BallTracker({ balls }) {
+  return (
+    <div className="flex flex-col justify-center gap-2 bg-black/18 px-4 py-2.5 sm:px-5">
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+        Last Six
+      </p>
+      <div className="flex justify-end gap-1.5 max-md:justify-start">
+        {balls.map((ball, index) => (
+          <span
+            key={`${ball}-${index}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-black shadow-lg sm:h-9 sm:w-9 ${ballStyles[ball] || ballStyles["."]}`}
+          >
+            {ball}
           </span>
         ))}
       </div>
-      <style jsx>{`
-        .broadcast-ticker {
-          animation: broadcastTicker 42s linear infinite;
-        }
-
-        @keyframes broadcastTicker {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
-    </section>
+    </div>
   );
+});
+
+const Metric = memo(function Metric({ label, value }) {
+  return (
+    <p className="shrink-0 text-white">
+      <span className="mr-2 text-cyan-300">{label}</span>
+      {value}
+    </p>
+  );
+});
+
+function buildScorebarModel(match) {
+  const showRequiredRate = match.innings === 2 && Boolean(match.target);
+  const meta = [
+    match.tournamentName || match.tournament || match.seriesName,
+    formatMatchNumber(match),
+    match.ground || match.venue,
+  ].filter(Boolean);
+
+  return {
+    meta,
+    status: match.status,
+    team: match.battingTeam || match.teamA || "Batting Team",
+    score: match.score ?? 0,
+    wickets: match.wickets ?? 0,
+    overs: match.overs || "0.0",
+    striker: formatBatter(match.striker),
+    nonStriker: formatBatter(match.nonStriker),
+    bowler: formatBowler(match.currentBowler),
+    lastSix: getLastSixDeliveries(match),
+    metrics: {
+      crr: getRunRate(match.score || 0, match.totalBalls || 0),
+      rrr: showRequiredRate ? getRequiredRate(match) : "",
+      need: getNeedLine(match),
+      status: getStatusLine(match),
+    },
+  };
+}
+
+function formatBatter(player) {
+  return {
+    name: formatPlayerName(player?.name),
+    runs: player?.runs || 0,
+    balls: player?.balls || 0,
+  };
+}
+
+function formatBowler(bowler) {
+  return {
+    name: formatPlayerName(bowler?.name),
+    wickets: bowler?.wickets || 0,
+    runs: bowler?.runs || 0,
+    overs: formatBowlerOvers(bowler?.balls),
+  };
+}
+
+function formatMatchNumber(match) {
+  const value = match.matchNumber || match.matchNo || match.matchIndex || match.matchId;
+  if (!value) return "";
+  const text = String(value).toUpperCase();
+
+  return text.startsWith("MATCH") ? text : `Match ${text}`;
+}
+
+function formatStatus(status) {
+  if (!status) return "Live";
+  if (status === "innings_break") return "Innings Break";
+  if (status === "abandoned") return "Abandoned";
+  if (status === "completed") return "Completed";
+  if (status === "paused") return "Rain Delay";
+
+  return String(status).replaceAll("_", " ");
+}
+
+function getStatusTone(status) {
+  if (status === "completed") return "border-slate-300/50 bg-slate-300/20 text-slate-100";
+  if (status === "innings_break") return "border-yellow-300/60 bg-yellow-300/20 text-yellow-100";
+  if (status === "paused") return "border-blue-300/60 bg-blue-300/20 text-blue-100";
+  if (status === "abandoned") return "border-red-300/60 bg-red-400/25 text-red-100";
+
+  return "border-emerald-300/60 bg-emerald-400/25 text-emerald-100";
+}
+
+function formatPlayerName(name) {
+  if (!name) return "-";
+
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+
+  return `${parts[0]} ${parts.slice(1).map((part) => `${part[0]}.`).join(" ")}`;
+}
+
+function formatBowlerOvers(balls = 0) {
+  const legalBalls = Number(balls || 0);
+  return `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`;
+}
+
+function getStatusLine(match) {
+  if (match.status === "innings_break") return `Innings break. Target ${match.target || "-"}`;
+  if (match.status === "paused") return `Match paused${match.pauseReason ? `: ${match.pauseReason}` : ""}`;
+  if (match.status === "completed") return match.winner ? `Winner: ${match.winner}` : "Match completed";
+  if (match.revisedTargetApplied) return `Revised target ${match.revisedTarget} from ${match.revisedOvers} overs`;
+
+  return match.status ? String(match.status).replaceAll("_", " ") : "Live cricket coverage";
+}
+
+function getLastSixDeliveries(match) {
+  const events = match.commentary || match.balls || [];
+  const balls = events
+    .filter((ball) => ball.isLegalDelivery !== false)
+    .map((ball) => normalizeBallLabel(ball))
+    .filter(Boolean)
+    .slice(-6);
+  const fallback = (match.currentOver || []).map(normalizeBallLabel).filter(Boolean).slice(-6);
+  const source = balls.length ? balls : fallback;
+  const padded = [...source];
+
+  while (padded.length < 6) {
+    padded.unshift(".");
+  }
+
+  return padded;
+}
+
+function normalizeBallLabel(ball) {
+  const raw = typeof ball === "string" ? ball : ball?.label || ball?.type || "";
+  const label = String(raw).trim().toUpperCase();
+
+  if (!label || label === "0") return ".";
+  if (label === "WD" || label === "WIDE") return "WD";
+  if (label === "NB" || label === "NO BALL" || label === "NO_BALL") return "NB";
+  if (label === "LB" || label === "LEG BYE" || label === "LEG_BYE") return "LB";
+  if (label === "B" || label === "BYE") return "B";
+  if (label === "WICKET") return "W";
+  if (["1", "2", "3", "4", "6", "W"].includes(label)) return label;
+
+  return label.slice(0, 2);
 }

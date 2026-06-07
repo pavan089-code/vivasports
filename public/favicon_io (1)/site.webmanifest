@@ -4,9 +4,6 @@
   "description": "Live Cricket Scores, Fixtures, Results and Streaming",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
-  "background_color": "#020611",
-  "theme_color": "#D8B45A",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -19,5 +16,8 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "theme_color": "#D8B45A",
+  "background_color": "#020611",
+  "display": "standalone"
 }
