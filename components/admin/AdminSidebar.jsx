@@ -1,6 +1,8 @@
 export default function AdminSidebar({
   activeTab,
   setActiveTab,
+  mobile = false,
+  onClose,
 }) {
   const operationLinks = [
     ["Points Manager", "/admin/points-table"],
@@ -16,22 +18,41 @@ export default function AdminSidebar({
 
   return (
     <aside
-      className="
-        w-64
+      className={`
+        min-w-0
         min-h-screen
+        overflow-y-auto
         bg-[#0A1428]
-        border-r border-white/10
+        border-r border-[var(--border)]
         p-6
-      "
+        ${
+          mobile
+            ? "admin-drawer-enter fixed inset-y-0 left-0 z-50 w-[min(18rem,calc(100vw-2rem))] lg:hidden"
+            : "hidden lg:sticky lg:top-0 lg:block lg:w-64"
+        }
+      `}
     >
-      <div className="mb-10">
-        <h2 className="text-3xl font-black text-white">
-          VIVA SPORTS
-        </h2>
+      <div className="mb-10 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-white sm:text-3xl">
+            VIVA SPORTS
+          </h2>
 
-        <p className="text-cyan-400 text-xs tracking-widest">
+        <p className="text-[var(--vs-gold)] text-xs font-bold tracking-widest">
           ADMIN PANEL
         </p>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Close admin menu"
+          onClick={onClose}
+          className={`h-11 w-11 items-center justify-center rounded-xl bg-[#101D35] text-xl font-black text-white ${
+            mobile ? "flex" : "hidden"
+          }`}
+        >
+          X
+        </button>
       </div>
 
       <nav className="space-y-3">
@@ -50,8 +71,8 @@ export default function AdminSidebar({
 
               ${
                 activeTab === tab
-                  ? "bg-cyan-500 text-white font-semibold"
-                  : "bg-[#101D35] text-slate-300"
+                  ? "bg-[var(--vs-gold)] text-[#06152F] font-semibold"
+                  : "bg-[#101D35] text-[var(--text-secondary)]"
               }
             `}
           >
@@ -60,14 +81,15 @@ export default function AdminSidebar({
         ))}
 
         <div className="pt-6">
-          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
             Operations
           </p>
           {operationLinks.map(([label, href]) => (
             <a
               key={href}
               href={href}
-              className="mb-3 flex h-12 items-center justify-center rounded-xl bg-[#101D35] text-sm font-semibold text-slate-300"
+              onClick={onClose}
+              className="mb-3 flex min-h-12 items-center justify-center rounded-xl bg-[#101D35] px-3 text-center text-sm font-semibold text-[var(--text-secondary)]"
             >
               {label}
             </a>
@@ -77,3 +99,4 @@ export default function AdminSidebar({
     </aside>
   );
 }
+

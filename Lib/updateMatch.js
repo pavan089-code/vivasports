@@ -32,7 +32,12 @@ export async function updateMatch(eventType) {
       currentOver = [],
 
       target = 0,
-      totalOvers = 20,
+      totalOvers,
+      oversLimit,
+      oversPerInnings,
+      inningsOvers,
+      matchOvers,
+      maxOvers,
 
       battingTeam = "",
 
@@ -207,6 +212,11 @@ export async function updateMatch(eventType) {
       overs,
       balls,
       totalOvers,
+      oversLimit,
+      oversPerInnings,
+      inningsOvers,
+      matchOvers,
+      maxOvers,
       battingTeam,
     });
 
@@ -216,6 +226,11 @@ export async function updateMatch(eventType) {
       wickets,
       overs,
       balls,
+      oversLimit,
+      oversPerInnings,
+      inningsOvers,
+      matchOvers,
+      maxOvers,
 
       currentOver,
 

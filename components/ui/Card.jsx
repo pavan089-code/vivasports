@@ -1,6 +1,7 @@
-export default function Card({ children, className = "" }) {
+export default function Card({ children, className = "", ...props }) {
   return (
     <div
+      {...props}
       className={`
         vs-card
         p-4

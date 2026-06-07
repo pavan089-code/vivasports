@@ -104,11 +104,13 @@ export default function TeamManager() {
         <button
           onClick={handleCreateTeam}
           className="
+            w-full
+            sm:w-fit
             h-14
             px-6
             rounded-xl
-            bg-cyan-500
-            text-white
+            bg-[var(--vs-gold)]
+            text-[#06152F]
             font-bold
           "
         >
@@ -118,3 +120,4 @@ export default function TeamManager() {
     </Card>
   );
 }
+

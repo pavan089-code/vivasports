@@ -14,18 +14,18 @@ import {
 } from "@/utils/broadcastUtils";
 
 const ballStyles = {
-  ".": "border-slate-500/60 bg-slate-500/35 text-white",
-  "0": "border-slate-500/60 bg-slate-500/35 text-white",
-  "1": "border-blue-400/70 bg-blue-500/45 text-white",
-  "2": "border-blue-400/70 bg-blue-500/45 text-white",
-  "3": "border-blue-400/70 bg-blue-500/45 text-white",
-  "4": "border-cyan-300/80 bg-cyan-500/55 text-white",
-  "6": "border-emerald-300/80 bg-emerald-500/60 text-white",
-  W: "border-red-300/85 bg-red-500/70 text-white",
-  WD: "border-yellow-200/85 bg-yellow-400/75 text-[#06111F]",
-  NB: "border-orange-200/85 bg-orange-500/75 text-white",
-  LB: "border-purple-200/85 bg-purple-500/65 text-white",
-  B: "border-purple-200/85 bg-purple-500/65 text-white",
+  ".": "border-[#5A657A] bg-[#5A657A] text-white",
+  "0": "border-[#5A657A] bg-[#5A657A] text-white",
+  "1": "border-[#4A6FD6] bg-[#4A6FD6] text-white",
+  "2": "border-[#4A6FD6] bg-[#4A6FD6] text-white",
+  "3": "border-[#4A6FD6] bg-[#4A6FD6] text-white",
+  "4": "border-[#3AAED8] bg-[#3AAED8] text-white",
+  "6": "border-[#1F6F50] bg-[#1F6F50] text-white",
+  W: "border-[#C0392B] bg-[#C0392B] text-white",
+  WD: "border-[#F4B942] bg-[#F4B942] text-[#06152F]",
+  NB: "border-[#F39C12] bg-[#F39C12] text-[#06152F]",
+  LB: "border-purple-400 bg-purple-500 text-white",
+  B: "border-purple-400 bg-purple-500 text-white",
 };
 
 const defaultSettings = {
@@ -53,14 +53,14 @@ const demoMatch = {
   striker: { name: "Vijay Chandra", runs: 42, balls: 31 },
   nonStriker: { name: "Ajay Chavan", runs: 17, balls: 14 },
   currentBowler: { name: "Venu Chandran", wickets: 2, runs: 18, balls: 20 },
-  currentOver: ["1", ".", "4", "W", "1", "2"],
+  currentOver: ["1", ".", "4", "W", "WD+4", "NB+1"],
   commentary: [
     { label: "1", isLegalDelivery: true, createdAt: 1 },
     { label: "0", isLegalDelivery: true, createdAt: 2 },
     { label: "4", isLegalDelivery: true, batterRuns: 4, striker: "Vijay Chandra", bowler: "Venu Chandran", createdAt: 3 },
     { label: "W", type: "wicket", isLegalDelivery: true, striker: "Vijay Chandra", bowler: "Venu Chandran", createdAt: 4 },
-    { label: "1", isLegalDelivery: true, createdAt: 5 },
-    { label: "2", isLegalDelivery: true, createdAt: 6 },
+    { label: "WD+4", isLegalDelivery: false, createdAt: 5 },
+    { label: "NB+1", isLegalDelivery: false, createdAt: 6 },
   ],
 };
 
@@ -135,13 +135,13 @@ const Scorebar = memo(function Scorebar({ match }) {
   return (
     <section className="absolute inset-x-0 bottom-0 px-2 pb-2 sm:px-4 sm:pb-3 lg:px-5 lg:pb-4">
       <div className="mx-auto w-full overflow-hidden rounded-xl border border-white/15 bg-[#06111F]/90 shadow-2xl shadow-black/55 backdrop-blur-xl will-change-transform">
-        <div className="grid min-h-6 grid-cols-[minmax(118px,0.1fr)_1fr_auto] items-center gap-3 border-b border-white/10 bg-black/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-300 sm:px-4">
+        <div className="grid min-h-6 grid-cols-[minmax(118px,0.1fr)_1fr_auto] items-center gap-3 border-b border-white/10 bg-black/20 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#A8B3C7] sm:px-4">
           <BrandMark />
           <TournamentStrip meta={model.meta} />
           <StatusBadge status={model.status} />
         </div>
 
-        <div className="grid min-h-[76px] grid-cols-[minmax(210px,0.72fr)_minmax(420px,1.45fr)_minmax(178px,0.48fr)] items-stretch divide-x divide-white/10 max-md:grid-cols-[minmax(185px,0.82fr)_minmax(280px,1fr)] max-md:divide-y max-md:divide-x-0 max-sm:grid-cols-1">
+        <div className="grid min-h-[76px] grid-cols-[minmax(230px,0.7fr)_minmax(430px,1.35fr)_minmax(380px,0.62fr)] items-stretch divide-x divide-white/10 max-md:grid-cols-[minmax(185px,0.82fr)_minmax(280px,1fr)] max-md:divide-y max-md:divide-x-0 max-sm:grid-cols-1">
           <TeamScoreBlock team={model.team} score={model.score} wickets={model.wickets} overs={model.overs} />
           <PlayerArea striker={model.striker} nonStriker={model.nonStriker} bowler={model.bowler} metrics={model.metrics} />
           <BallTracker balls={model.lastSix} />
@@ -154,7 +154,7 @@ const Scorebar = memo(function Scorebar({ match }) {
 const BrandMark = memo(function BrandMark() {
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-cyan-300/45 bg-black">
+      <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-[#D4AF37]/55 bg-black">
         <Image
           src="/logo.jpeg"
           alt="Viva Sports"
@@ -173,7 +173,7 @@ const TournamentStrip = memo(function TournamentStrip({ meta }) {
   return (
     <div className="flex min-w-0 items-center gap-3 overflow-hidden">
       {meta.map((item) => (
-        <span key={item} className="truncate first:text-cyan-200">
+        <span key={item} className="truncate first:text-[#D4AF37]">
           {item}
         </span>
       ))}
@@ -194,20 +194,20 @@ const StatusBadge = memo(function StatusBadge({ status }) {
 
 const TeamScoreBlock = memo(function TeamScoreBlock({ team, score, wickets, overs }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-[#071826]/70 px-4 py-2.5 sm:px-5">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-[#D4AF37] px-4 py-2.5 text-[#06152F] sm:px-5">
       <div className="min-w-0">
-        <h1 className="truncate text-xl font-black uppercase leading-tight text-white sm:text-2xl lg:text-3xl">
+        <h1 className="truncate text-xl font-black uppercase leading-tight sm:text-2xl lg:text-3xl">
           {team}
         </h1>
-        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">
+        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#06152F]/75">
           Batting
         </p>
       </div>
       <div className="text-right">
-        <p className="whitespace-nowrap text-3xl font-black leading-none text-white sm:text-4xl">
+        <p className="whitespace-nowrap text-3xl font-black leading-none sm:text-4xl">
           {score}/{wickets}
         </p>
-        <p className="mt-1 whitespace-nowrap text-xs font-black uppercase tracking-wide text-slate-300 sm:text-sm">
+        <p className="mt-1 whitespace-nowrap text-xs font-black uppercase tracking-wide text-[#06152F]/75 sm:text-sm">
           ({overs} Ov)
         </p>
       </div>
@@ -236,9 +236,9 @@ const BatterLine = memo(function BatterLine({ player, striker = false }) {
       </p>
       <p className="mt-1 truncate text-lg font-black uppercase leading-tight text-white sm:text-xl">
         {player.name}
-        {striker && <span className="ml-1 text-cyan-300">*</span>}
+        {striker && <span className="ml-1 text-[#D4AF37]">*</span>}
       </p>
-      <p className="text-sm font-black text-cyan-100 sm:text-base">
+      <p className="text-sm font-black text-[#D4AF37] sm:text-base">
         {player.runs} ({player.balls})
       </p>
     </div>
@@ -254,7 +254,7 @@ const BowlerLine = memo(function BowlerLine({ bowler }) {
       <p className="mt-1 truncate text-lg font-black uppercase leading-tight text-white sm:text-xl">
         {bowler.name}
       </p>
-      <p className="text-sm font-black text-cyan-100 sm:text-base">
+      <p className="text-sm font-black text-[#D4AF37] sm:text-base">
         {bowler.wickets}-{bowler.runs}
         <span className="ml-2 text-slate-300">{bowler.overs} Ov</span>
       </p>
@@ -267,24 +267,26 @@ const StatusStrip = memo(function StatusStrip({ metrics }) {
     <div className="mt-2 flex items-center gap-4 border-t border-white/10 pt-2 text-xs font-black uppercase tracking-wide text-white sm:text-sm">
       <Metric label="CRR" value={metrics.crr} />
       {metrics.rrr && <Metric label="RRR" value={metrics.rrr} />}
-      <p className="min-w-0 truncate text-cyan-100">{metrics.need || metrics.status}</p>
+      <p className="min-w-0 truncate text-[#F8FAFC]">{metrics.need || metrics.status}</p>
     </div>
   );
 });
 
 const BallTracker = memo(function BallTracker({ balls }) {
   return (
-    <div className="flex flex-col justify-center gap-2 bg-black/18 px-4 py-2.5 sm:px-5">
+    <div className="flex flex-col justify-center gap-2 bg-black/18 px-6 py-2.5 sm:px-7">
       <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
         Last Six
       </p>
-      <div className="flex justify-end gap-1.5 max-md:justify-start">
+      <div className="flex justify-start gap-2 overflow-hidden">
         {balls.map((ball, index) => (
           <span
             key={`${ball}-${index}`}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-black shadow-lg sm:h-9 sm:w-9 ${ballStyles[ball] || ballStyles["."]}`}
+            className={`flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full border text-[22px] font-black leading-none shadow-lg ${getBallStyle(ball)}`}
           >
-            {ball}
+            <span className={ball.length > 2 ? "scale-75 whitespace-nowrap" : "whitespace-nowrap"}>
+              {ball}
+            </span>
           </span>
         ))}
       </div>
@@ -295,7 +297,7 @@ const BallTracker = memo(function BallTracker({ balls }) {
 const Metric = memo(function Metric({ label, value }) {
   return (
     <p className="shrink-0 text-white">
-      <span className="mr-2 text-cyan-300">{label}</span>
+      <span className="mr-2 text-[#D4AF37]">{label}</span>
       {value}
     </p>
   );
@@ -399,7 +401,6 @@ function getStatusLine(match) {
 function getLastSixDeliveries(match) {
   const events = match.commentary || match.balls || [];
   const balls = events
-    .filter((ball) => ball.isLegalDelivery !== false)
     .map((ball) => normalizeBallLabel(ball))
     .filter(Boolean)
     .slice(-6);
@@ -419,12 +420,21 @@ function normalizeBallLabel(ball) {
   const label = String(raw).trim().toUpperCase();
 
   if (!label || label === "0") return ".";
-  if (label === "WD" || label === "WIDE") return "WD";
-  if (label === "NB" || label === "NO BALL" || label === "NO_BALL") return "NB";
-  if (label === "LB" || label === "LEG BYE" || label === "LEG_BYE") return "LB";
-  if (label === "B" || label === "BYE") return "B";
+  if (label.startsWith("WD+") || label === "WD" || label === "WIDE") return label.replace("WIDE", "WD");
+  if (label.startsWith("NB+") || label === "NB" || label === "NO BALL" || label === "NO_BALL") return label.replace("NO BALL", "NB").replace("NO_BALL", "NB");
+  if (label.startsWith("LB+") || label === "LB" || label === "LEG BYE" || label === "LEG_BYE") return label.replace("LEG BYE", "LB").replace("LEG_BYE", "LB");
+  if (label.startsWith("B+") || label === "B" || label === "BYE") return label.replace("BYE", "B");
   if (label === "WICKET") return "W";
   if (["1", "2", "3", "4", "6", "W"].includes(label)) return label;
 
   return label.slice(0, 2);
+}
+
+function getBallStyle(ball) {
+  if (ball.startsWith("WD")) return ballStyles.WD;
+  if (ball.startsWith("NB")) return ballStyles.NB;
+  if (ball.startsWith("LB")) return ballStyles.LB;
+  if (ball.startsWith("B")) return ballStyles.B;
+
+  return ballStyles[ball] || ballStyles["."];
 }

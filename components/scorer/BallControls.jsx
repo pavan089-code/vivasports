@@ -1,4 +1,10 @@
-export default function BallControls({
+import { memo } from "react";
+
+const wideOptions = [0, 1, 2, 3, 4];
+const noBallOptions = [0, 1, 2, 3, 4, 6];
+const byeOptions = [1, 2, 3, 4];
+
+function BallControls({
   disabled,
   onScore,
   onWicket,
@@ -10,20 +16,20 @@ export default function BallControls({
   onSwapStrike,
 }) {
   const buttonClass = `
-    h-20
+    h-[76px]
+    min-h-[76px]
+    active:scale-[0.98]
     rounded-2xl
-    text-2xl
+    text-[clamp(1.15rem,5vw,1.5rem)]
     font-black
     text-white
+    transition
+    disabled:opacity-55
   `;
-
-  const wideOptions = [0, 1, 2, 3, 4];
-  const noBallOptions = [0, 1, 2, 3, 4, 6];
-  const byeOptions = [1, 2, 3, 4];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 md:grid-cols-6">
       <button
         disabled={disabled}
         onClick={() => onScore(0)}
@@ -43,7 +49,7 @@ export default function BallControls({
       <button
         disabled={disabled}
         onClick={() => onScore(2)}
-        className={`${buttonClass} bg-cyan-500`}
+        className={`${buttonClass} bg-[#4A6FD6]`}
       >
         2
       </button>
@@ -59,7 +65,7 @@ export default function BallControls({
       <button
         disabled={disabled}
         onClick={() => onScore(4)}
-        className={`${buttonClass} bg-green-500`}
+        className={`${buttonClass} bg-green-600`}
       >
         FOUR
       </button>
@@ -75,7 +81,7 @@ export default function BallControls({
       <button
         disabled={disabled}
         onClick={onWicket}
-        className={`${buttonClass} bg-red-500`}
+        className={`${buttonClass} bg-red-600`}
       >
         WICKET
       </button>
@@ -91,7 +97,7 @@ export default function BallControls({
       <button
         disabled={disabled}
         onClick={onRedo}
-        className={`${buttonClass} bg-cyan-600`}
+        className={`${buttonClass} bg-[var(--vs-gold)] text-[#06152F]`}
       >
         REDO
       </button>
@@ -111,7 +117,7 @@ export default function BallControls({
             key={`wide-${runs}`}
             disabled={disabled}
             onClick={() => onWide(runs)}
-            className={`${buttonClass} bg-yellow-500 text-black`}
+            className={`${buttonClass} bg-[#F5C542] text-[#06152F]`}
           >
             {runs ? `WD+${runs}` : "WD"}
           </button>
@@ -124,7 +130,7 @@ export default function BallControls({
             key={`nb-${runs}`}
             disabled={disabled}
             onClick={() => onNoBall(runs)}
-            className={`${buttonClass} bg-orange-500`}
+            className={`${buttonClass} bg-[#F28C28] text-[#06152F]`}
           >
             {runs ? `NB+${runs}` : "NB"}
           </button>
@@ -166,7 +172,9 @@ function ControlGroup({ title, children }) {
       <p className="text-slate-400 text-sm uppercase tracking-widest mb-3">
         {title}
       </p>
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">{children}</div>
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 md:grid-cols-6">{children}</div>
     </div>
   );
 }
+
+export default memo(BallControls);

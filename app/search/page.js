@@ -81,7 +81,7 @@ export default function SearchPage() {
       <Navbar />
 
       <section className="mx-auto max-w-7xl px-4 py-10">
-        <p className="text-sm font-semibold tracking-widest text-cyan-400">
+        <p className="text-sm font-semibold tracking-widest text-[var(--vs-gold)]">
           GLOBAL SEARCH
         </p>
         <h1 className="mt-2 text-4xl font-black md:text-5xl">
@@ -96,7 +96,7 @@ export default function SearchPage() {
           onChange={(event) => setQuery(event.target.value)}
           autoFocus
           placeholder="Search by player, team, ground, status..."
-          className="mt-8 w-full rounded-2xl border border-cyan-400/30 bg-[#0A1428] px-5 py-4 text-lg text-white outline-none focus:border-cyan-300"
+          className="mt-8 w-full rounded-2xl border border-[var(--vs-gold)]/30 bg-[#0A1428] px-5 py-4 text-lg text-white outline-none focus:border-[var(--vs-gold)]"
         />
 
         <div className="mt-8 space-y-6">
@@ -162,7 +162,7 @@ function ResultGroup({ title, count, children }) {
     <section className="rounded-2xl border border-white/10 bg-[#101D35] p-5 md:p-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-2xl font-black">{title}</h2>
-        <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-sm font-bold text-cyan-200">
+        <span className="rounded-full bg-[var(--vs-gold)]/10 px-3 py-1 text-sm font-bold text-[var(--vs-gold-soft)]">
           {count}
         </span>
       </div>
@@ -182,3 +182,4 @@ function ResultLink({ href, title, meta }) {
     </Link>
   );
 }
+

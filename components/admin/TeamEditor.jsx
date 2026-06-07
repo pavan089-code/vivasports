@@ -75,17 +75,17 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
 
   if (!editing) {
     return (
-      <div className="flex gap-3 mt-6">
+      <div className="mt-6 flex flex-wrap gap-3">
         <button
           onClick={() => setEditing(true)}
-          className="px-4 py-2 rounded-xl bg-yellow-500 text-white"
+          className="min-h-11 flex-1 rounded-xl bg-yellow-500 px-4 py-2 font-semibold text-white sm:flex-none"
         >
           Edit
         </button>
 
         <button
           onClick={onDelete}
-          className="px-4 py-2 rounded-xl bg-red-500 text-white"
+          className="min-h-11 flex-1 rounded-xl bg-red-500 px-4 py-2 font-semibold text-white sm:flex-none"
         >
           Delete
         </button>
@@ -94,7 +94,7 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
   }
 
   return (
-    <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-[#101D35] p-5">
+    <div className="mt-6 min-w-0 space-y-4 rounded-2xl border border-white/10 bg-[#101D35] p-4 sm:p-5">
       <div>
         <label className="block text-slate-400 mb-2">Team Name</label>
         <input
@@ -113,7 +113,7 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
           placeholder="Captain"
           className="h-12 w-full rounded-lg bg-[#0A1428] px-3 text-white"
         />
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-slate-300">
           Captain is automatically kept in the squad.
         </p>
       </div>
@@ -132,16 +132,16 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
           {normalizeRoster(players, captain).map((player) => (
             <div
               key={player}
-              className="flex items-center justify-between rounded-lg bg-[#0A1428] px-3 py-2"
+              className="flex flex-col gap-2 rounded-lg bg-[#0A1428] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <span className="text-white">
+              <span className="break-words text-white">
                 {player}
                 {player.toLowerCase() === captain.trim().toLowerCase() && (
-                  <span className="ml-2 text-xs font-bold text-cyan-300">Captain</span>
+                  <span className="ml-2 text-xs font-bold text-[var(--vs-gold)]">Captain</span>
                 )}
               </span>
 
-              <button onClick={() => removePlayer(player)} className="text-red-400">
+              <button onClick={() => removePlayer(player)} className="min-h-11 w-full rounded-lg bg-red-500/10 px-3 text-red-300 sm:w-auto sm:bg-transparent">
                 Remove
               </button>
             </div>
@@ -149,28 +149,29 @@ export default function TeamEditor({ team, onRefresh, onDelete }) {
         </div>
       </div>
 
-      <div className="flex gap-2 items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           value={newPlayer}
           onChange={(event) => setNewPlayer(event.target.value)}
           placeholder="Player Name"
-          className="h-12 flex-1 rounded-xl border border-white/10 bg-[#0A1428] px-3 text-white"
+          className="h-12 w-full flex-1 rounded-xl border border-white/10 bg-[#0A1428] px-3 text-white"
         />
 
-        <button onClick={addPlayer} className="rounded-lg bg-cyan-500 px-4 py-3 text-white">
+        <button onClick={addPlayer} className="min-h-11 w-full rounded-lg bg-[var(--vs-gold)] px-4 py-3 font-bold text-[#06152F] sm:w-auto">
           Add
         </button>
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button onClick={handleSave} className="rounded-xl bg-green-500 px-5 py-3 font-bold text-white">
+      <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+        <button onClick={handleSave} className="min-h-11 rounded-xl bg-green-500 px-5 py-3 font-bold text-white">
           Save Changes
         </button>
 
-        <button onClick={() => setEditing(false)} className="rounded-xl bg-slate-600 px-5 py-3 text-white">
+        <button onClick={() => setEditing(false)} className="min-h-11 rounded-xl bg-slate-600 px-5 py-3 text-white">
           Cancel
         </button>
       </div>
     </div>
   );
 }
+

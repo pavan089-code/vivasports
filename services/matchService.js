@@ -13,10 +13,6 @@ import {
 } from "firebase/firestore";
 
 import { db } from "@/Lib/firebase";
-import { updatePointsTable } from "@/Lib/pointsTable";
-import { updatePlayerStats } from "@/services/playerStatsService";
-import { getSettings } from "@/services/SettingServices";
-import { calculatePlayerOfMatch } from "@/utils/playerOfMatchUtils";
 
 export async function createMatch(data) {
   const docRef = await addDoc(
@@ -43,6 +39,10 @@ export async function updateMatch(
   );
 
   if (data.status === "completed") {
+    const { updatePointsTable } = await import("@/Lib/pointsTable");
+    const { updatePlayerStats } = await import("@/services/playerStatsService");
+    const { getSettings } = await import("@/services/SettingServices");
+    const { calculatePlayerOfMatch } = await import("@/utils/playerOfMatchUtils");
     const settings = await getSettings();
     const automaticStandings = settings?.automaticStandings !== false;
     const snapshot = await getDoc(matchRef);

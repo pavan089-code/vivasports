@@ -29,7 +29,7 @@ export default function ResultsList() {
 
   return (
     <section className="max-w-7xl mx-auto py-10 px-4">
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="vs-eyebrow">
           MATCH RESULTS
         </p>
@@ -47,39 +47,25 @@ export default function ResultsList() {
             key={match.id}
             className="vs-card p-5 md:p-6"
           >
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-black text-white">
-                  {match.teamA} vs {match.teamB}
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--vs-gold)]">
+                  {match.matchStage || "Result"}
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-white md:text-3xl">
+                  {match.winner || "No Result"}
                 </h2>
-                <p className="text-slate-400 mt-2">
-                  {[match.date, match.time, match.ground].filter(Boolean).join(" | ")}
+                <p className="mt-2 text-lg font-bold text-[var(--vs-success)]">
+                  {getResultText(match.result)}
                 </p>
               </div>
 
               <div className="vs-card-muted p-4">
-                <p className="inline-flex rounded-full bg-[var(--vs-gold)]/10 px-4 py-2 font-bold text-[var(--vs-gold-soft)]">
-                  {getResultText(match.result)}
+                <p className="font-black text-white">
+                  {match.teamA} vs {match.teamB}
                 </p>
 
-                <p className="mt-3 font-semibold text-[var(--vs-success)]">
-                  Winner: {match.winner || "Tie"}
-                </p>
-
-                {match.playerOfMatch && (
-                  <p className="mt-3 font-semibold text-[var(--vs-gold-soft)]">
-                    Player of the Match: {match.playerOfMatch.playerName} (
-                    {match.playerOfMatch.teamName})
-                  </p>
-                )}
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {match.resultType === "walkover" && <WarningBadge label="Walkover" />}
-                  {match.resultType === "abandoned" && <WarningBadge label="Abandoned" />}
-                  {match.revisedTargetApplied && <WarningBadge label="Revised Target" />}
-                </div>
-
-                <div className="mt-4 grid gap-2 text-slate-300 sm:grid-cols-2">
+                <div className="mt-3 grid gap-2 text-slate-300 sm:grid-cols-2">
                   <p>
                     {match.teamA}: {match.firstInningsScore ?? "-"}/
                     {match.firstInningsWickets ?? "-"}
@@ -88,6 +74,23 @@ export default function ResultsList() {
                     {match.teamB}: {match.secondInningsScore ?? "-"}/
                     {match.secondInningsWickets ?? "-"}
                   </p>
+                </div>
+
+                {match.playerOfMatch && (
+                  <p className="mt-3 font-semibold text-[var(--vs-gold-soft)]">
+                    Player of the Match: {match.playerOfMatch.playerName} (
+                    {match.playerOfMatch.teamName})
+                  </p>
+                )}
+
+                <p className="mt-3 text-sm text-slate-300">
+                  {[match.date, match.time, match.ground].filter(Boolean).join(" | ")}
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {match.resultType === "walkover" && <WarningBadge label="Walkover" />}
+                  {match.resultType === "abandoned" && <WarningBadge label="Abandoned" />}
+                  {match.revisedTargetApplied && <WarningBadge label="Revised Target" />}
                 </div>
               </div>
 

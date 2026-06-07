@@ -5,19 +5,24 @@ export default function CurrentOver({ balls }) {
         <div
           key={index}
           className="
-            w-14
+            min-w-14
             h-14
+            px-2
             rounded-full
             bg-[#101D35]
+            border
+            border-white/10
             flex
             items-center
             justify-center
             font-black
-            text-xl
+            text-[clamp(0.78rem,2.6vw,1.25rem)]
+            leading-none
             text-white
+            whitespace-nowrap
           "
         >
-          <span>{String(ball)}</span>
+          <span className="block max-w-full whitespace-nowrap">{String(ball)}</span>
         </div>
       ))}
     </div>

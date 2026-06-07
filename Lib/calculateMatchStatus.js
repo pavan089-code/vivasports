@@ -1,9 +1,16 @@
+import { getOversPerInnings } from "@/utils/matchConfigUtils";
+
 export function calculateMatchStatus({
   target,
   score,
   overs,
   balls,
   totalOvers,
+  oversLimit,
+  oversPerInnings,
+  inningsOvers,
+  matchOvers,
+  maxOvers,
   battingTeam,
 }) {
 
@@ -11,7 +18,14 @@ export function calculateMatchStatus({
     return "First innings in progress";
   }
 
-  const totalBalls = totalOvers * 6;
+  const totalBalls = getOversPerInnings({
+    oversLimit,
+    oversPerInnings,
+    inningsOvers,
+    matchOvers,
+    maxOvers,
+    totalOvers,
+  }) * 6;
 
   const safeOvers =
     Number(overs || 0);

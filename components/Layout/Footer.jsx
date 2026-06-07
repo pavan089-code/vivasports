@@ -8,7 +8,7 @@ const quickLinks = [
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
-  ["Points Table", "/points_table"],
+  ["Points Table", "/pointstable"],
 ];
 
 const tournamentLinks = [

@@ -4,8 +4,10 @@ import {
 } from "@/utils/leaderboardUtils";
 import { sortUpcomingMatches } from "@/utils/tournamentUtils";
 
+import { getInningsBallLimit } from "@/utils/matchConfigUtils";
+
 export function getBallsRemaining(match) {
-  const limit = (match.oversLimit || 0) * 6;
+  const limit = getInningsBallLimit(match);
   return Math.max(limit - (match.totalBalls || 0), 0);
 }
 

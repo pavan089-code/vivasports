@@ -55,15 +55,18 @@ export default function PlayerManager({
               key={player}
               className="
                 flex
-                items-center
-                justify-between
+                flex-col
+                gap-2
                 bg-[#101D35]
                 rounded-lg
                 px-3
-                py-2
+                py-3
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
               "
             >
-              <span className="text-white">
+              <span className="break-words text-white">
                 {player}
               </span>
 
@@ -74,8 +77,13 @@ export default function PlayerManager({
                   )
                 }
                 className="
-                  text-red-400
+                  min-h-11
+                  rounded-lg
+                  bg-red-500/10
+                  px-3
                   text-sm
+                  text-red-300
+                  sm:bg-transparent
                 "
               >
                 Remove
@@ -85,7 +93,7 @@ export default function PlayerManager({
         )}
       </div>
 
-      <div className="flex gap-2 mt-4">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <input
           value={playerName}
           onChange={(e) =>
@@ -95,8 +103,9 @@ export default function PlayerManager({
           }
           placeholder="Player Name"
           className="
+            w-full
             flex-1
-            h-10
+            h-12
             px-3
             rounded-lg
             bg-[#101D35]
@@ -109,10 +118,14 @@ export default function PlayerManager({
         <button
           onClick={handleAddPlayer}
           className="
+            min-h-11
+            w-full
             px-4
             rounded-lg
-            bg-cyan-500
-            text-white
+            bg-[var(--vs-gold)]
+            text-[#06152F]
+            font-bold
+            sm:w-auto
           "
         >
           Add

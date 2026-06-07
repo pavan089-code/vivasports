@@ -5,6 +5,7 @@ import Card from "../ui/Card";
 
 import { createMatch } from "@/services/matchService";
 import { getTeams } from "@/services/teamService";
+import { getYouTubeEmbedUrl } from "@/utils/youtubeUtils";
 
 export default function MatchManager() {
   const [teams, setTeams] = useState([]);
@@ -73,6 +74,9 @@ export default function MatchManager() {
       return;
     }
 
+    const oversPerInnings = Number(oversLimit);
+    const youtubeEmbedUrl = getYouTubeEmbedUrl(youtubeLink);
+
     const matchId = await createMatch({
       teamA,
       teamB,
@@ -82,14 +86,20 @@ export default function MatchManager() {
 
       ground,
       youtubeLink,
+      youtubeUrl: youtubeLink,
+      streamUrl: youtubeLink,
+      liveStream: youtubeLink,
+      youtubeEmbedUrl,
 
       status: "scheduled",
 
       innings: 1,
 
-      oversLimit: Number(
-        oversLimit
-      ),
+      oversLimit: oversPerInnings,
+      oversPerInnings,
+      inningsOvers: oversPerInnings,
+      matchOvers: oversPerInnings,
+      maxOvers: oversPerInnings,
 
       target: null,
 
@@ -207,7 +217,7 @@ export default function MatchManager() {
           ))}
         </select>
 
-        <p className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-4 text-sm text-cyan-200">
+        <p className="rounded-xl border border-[var(--vs-gold)]/20 bg-[var(--vs-gold)]/10 p-4 text-sm text-[var(--vs-gold-soft)]">
           Toss is conducted by the scorer after the match starts.
         </p>
 
@@ -314,12 +324,14 @@ export default function MatchManager() {
         <button
           onClick={handleCreateMatch}
           className="
+            w-full
+            sm:w-fit
             h-14
             px-6
             rounded-xl
-            bg-cyan-500
-            hover:bg-cyan-600
-            text-white
+            bg-[var(--vs-gold)]
+            hover:bg-[#E5C158]
+            text-[#06152F]
             font-bold
           "
         >

@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import useMatch from "@/hooks/useMatch";
 import BallControls from "@/components/scorer/BallControls";
 import CurrentOver from "@/components/scorer/CurrentOver";
-import NewBatterModal from "@/components/scorer/NewBatterModel";
-import NewBowlerModal from "@/components/scorer/NewBowlerModel";
 import BatterCard from "@/components/match/BatterCard";
 import EmptyState from "@/components/ui/EmptyState";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
@@ -13,7 +12,22 @@ import { calculateOvers } from "@/utils/matchUtils";
 import { isInningsComplete } from "@/utils/inningsUtils";
 import { getMatchResult } from "@/utils/resultUtils";
 import { updateMatch } from "@/services/matchService";
-import { updatePointsTable } from "@/Lib/pointsTable";
+
+const NewBatterModal = dynamic(() => import("@/components/scorer/NewBatterModel"), {
+  loading: () => null,
+});
+const NewBowlerModal = dynamic(() => import("@/components/scorer/NewBowlerModel"), {
+  loading: () => null,
+});
+const DismissalModal = dynamic(() => import("@/components/scorer/DismissalModal"), {
+  loading: () => null,
+});
+const PauseReasonModal = dynamic(() => import("@/components/scorer/PauseReasonModal"), {
+  loading: () => null,
+});
+const MatchNotesPanel = dynamic(() => import("@/components/scorer/MatchNotesPanel"), {
+  loading: () => null,
+});
 
 function clonePlayer(player) {
   return player ? { ...player } : null;
@@ -94,6 +108,11 @@ function createSnapshot(match) {
     outPlayers: [...(match.outPlayers || [])],
     status: match.status,
     innings: match.innings,
+    oversLimit: match.oversLimit,
+    oversPerInnings: match.oversPerInnings,
+    inningsOvers: match.inningsOvers,
+    matchOvers: match.matchOvers,
+    maxOvers: match.maxOvers,
     target: match.target ?? null,
     battingTeam: match.battingTeam,
     bowlingTeam: match.bowlingTeam,
@@ -206,11 +225,31 @@ export default function ScorerScreen({ matchId }) {
   const [tossDecisionInput, setTossDecisionInput] = useState("");
   const toastTimer = useRef(null);
 
-  const needsToss = !!match && (!match.tossWinner || !match.tossDecision);
-  const needsBatter = !!match && (!match.striker || !match.nonStriker);
-  const needsBowler = !!match && !match.currentBowler;
-  const undoStack = useMemo(() => getUndoStack(match || {}), [match]);
-  const redoStack = useMemo(() => getRedoStack(match || {}), [match]);
+  const scorerState = useMemo(() => {
+    const currentMatch = match || {};
+
+    return {
+      needsToss: !!match && (!match.tossWinner || !match.tossDecision),
+      needsBatter: !!match && (!match.striker || !match.nonStriker),
+      needsBowler: !!match && !match.currentBowler,
+      undoStack: getUndoStack(currentMatch),
+      redoStack: getRedoStack(currentMatch),
+      resultText: getResultText(currentMatch.result),
+      bowlerOvers: getBowlerOvers(currentMatch.currentBowler),
+      latestNotes: currentMatch.matchNotes || [],
+    };
+  }, [match]);
+
+  const {
+    needsToss,
+    needsBatter,
+    needsBowler,
+    undoStack,
+    redoStack,
+    resultText,
+    bowlerOvers,
+    latestNotes,
+  } = scorerState;
 
   useEffect(() => {
     return () => {
@@ -473,7 +512,6 @@ export default function ScorerScreen({ matchId }) {
 
         if (resultData) {
           await updateMatch(matchId, baseUpdate);
-          await updatePointsTable(match, resultData);
           await finishMatch(resultData, newScore, newWickets);
           return;
         }
@@ -870,14 +908,12 @@ export default function ScorerScreen({ matchId }) {
     showActionToast("Bowler Selected");
   }
 
-  const resultText = getResultText(match.result);
-
   return (
-    <main className="min-h-screen bg-[#050B18] text-white p-6 md:p-10">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <main className="min-h-screen bg-[#050B18] p-4 text-white sm:p-6 md:p-10">
+      <div className="max-w-6xl mx-auto space-y-6 md:space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-cyan-400 text-sm">SCORER PANEL</p>
+            <p className="text-[var(--vs-gold)] text-sm">SCORER PANEL</p>
 
             <h1 className="text-4xl md:text-5xl font-black mt-2">
               {match.teamA} vs {match.teamB}
@@ -888,7 +924,7 @@ export default function ScorerScreen({ matchId }) {
             <button
               onClick={handleUndo}
               disabled={!undoStack.length && !match.balls?.length && !match.bowlerChangeBefore}
-              className="h-12 px-5 rounded-xl bg-red-700 text-white font-bold disabled:opacity-50"
+              className="h-14 min-w-24 rounded-xl bg-red-700 px-5 font-bold text-white disabled:opacity-50"
             >
               UNDO
             </button>
@@ -896,7 +932,7 @@ export default function ScorerScreen({ matchId }) {
             <button
               onClick={handleRedo}
               disabled={!redoStack.length}
-              className="h-12 px-5 rounded-xl bg-cyan-600 text-white font-bold disabled:opacity-50"
+              className="h-14 min-w-24 rounded-xl bg-[#D4AF37] px-5 font-bold text-[#06152F] disabled:opacity-50"
             >
               REDO
             </button>
@@ -919,7 +955,7 @@ export default function ScorerScreen({ matchId }) {
           <div className="rounded-3xl border border-white/10 bg-[#101D35] p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-cyan-300">
+                <p className="text-sm font-bold uppercase tracking-widest text-[var(--vs-gold)]">
                   Match Operations
                 </p>
                 <p className="mt-1 text-slate-400">
@@ -931,14 +967,14 @@ export default function ScorerScreen({ matchId }) {
                 {match.status === "paused" ? (
                   <button
                     onClick={handleResumeMatch}
-                    className="rounded-xl bg-green-600 px-4 py-2 font-bold"
+                    className="h-14 min-w-24 rounded-xl bg-green-600 px-5 font-bold text-white"
                   >
                     Resume
                   </button>
                 ) : (
                   <button
                     onClick={() => setShowPauseModal(true)}
-                    className="rounded-xl bg-orange-600 px-4 py-2 font-bold"
+                    className="h-14 min-w-24 rounded-xl bg-[#F28C28] px-5 font-bold text-[#06152F]"
                   >
                     Pause
                   </button>
@@ -946,7 +982,7 @@ export default function ScorerScreen({ matchId }) {
 
                 <button
                   onClick={handleDelayNote}
-                  className="rounded-xl bg-[#1B2A49] px-4 py-2 font-bold"
+                  className="h-14 rounded-xl bg-[#1B2A49] px-5 font-bold text-white"
                 >
                   Add Delay Note
                 </button>
@@ -954,7 +990,7 @@ export default function ScorerScreen({ matchId }) {
                 <button
                   onClick={handleRetiredHurt}
                   disabled={!match.striker || match.status === "paused"}
-                  className="rounded-xl bg-yellow-500 px-4 py-2 font-bold text-black disabled:opacity-50"
+                  className="h-14 rounded-xl bg-[#F5C542] px-5 font-bold text-[#06152F] disabled:opacity-50"
                 >
                   Retired Hurt
                 </button>
@@ -986,7 +1022,7 @@ export default function ScorerScreen({ matchId }) {
             {match.target && (
               <div className="text-left lg:text-right">
                 <p className="text-slate-400">Target</p>
-                <p className="text-4xl font-black text-cyan-400">
+                <p className="text-4xl font-black text-[var(--vs-gold)]">
                   {match.target}
                 </p>
               </div>
@@ -1023,7 +1059,7 @@ export default function ScorerScreen({ matchId }) {
               {match.currentBowler?.name || "Select Bowler"}
             </h3>
             <div className="flex gap-6 mt-6 text-slate-300">
-              <p>O: {getBowlerOvers(match.currentBowler)}</p>
+              <p>O: {bowlerOvers}</p>
               <p>R: {match.currentBowler?.runs || 0}</p>
               <p>W: {match.currentBowler?.wickets || 0}</p>
             </div>
@@ -1071,7 +1107,7 @@ export default function ScorerScreen({ matchId }) {
 
             <button
               onClick={handleConductToss}
-              className="mt-6 rounded-xl bg-green-600 px-6 py-3 font-black"
+              className="mt-6 h-14 rounded-xl bg-green-600 px-6 font-black text-white"
             >
               Start Scoring
             </button>
@@ -1094,7 +1130,7 @@ export default function ScorerScreen({ matchId }) {
               <button
                 onClick={() => setShowBatterModal(true)}
                 disabled={!!match.striker && !!match.nonStriker}
-                className="bg-cyan-600 px-6 py-3 rounded-xl font-bold disabled:opacity-50"
+                className="h-14 rounded-xl bg-[#D4AF37] px-6 font-bold text-[#06152F] disabled:opacity-50"
               >
                 Select Striker
               </button>
@@ -1102,14 +1138,14 @@ export default function ScorerScreen({ matchId }) {
               <button
                 onClick={() => setShowBatterModal(true)}
                 disabled={!match.striker || !!match.nonStriker}
-                className="bg-blue-600 px-6 py-3 rounded-xl font-bold disabled:opacity-50"
+                className="h-14 rounded-xl bg-blue-600 px-6 font-bold text-white disabled:opacity-50"
               >
                 Select Non-Striker
               </button>
 
               <button
                 onClick={() => setShowBowlerModal(true)}
-                className="bg-purple-600 px-6 py-3 rounded-xl font-bold"
+                className="h-14 rounded-xl bg-purple-600 px-6 font-bold text-white"
               >
                 Select Bowler
               </button>
@@ -1119,7 +1155,7 @@ export default function ScorerScreen({ matchId }) {
               <button
                 disabled={!match.striker || !match.nonStriker || !match.currentBowler}
                 onClick={startSecondInningsPlay}
-                className="mt-8 bg-green-600 px-8 py-4 rounded-xl text-xl font-bold disabled:opacity-50"
+                className="mt-8 h-16 rounded-xl bg-green-600 px-8 text-xl font-bold text-white disabled:opacity-50"
               >
                 START SECOND INNINGS
               </button>
@@ -1155,114 +1191,51 @@ export default function ScorerScreen({ matchId }) {
           </div>
         )}
 
-        {!!match.matchNotes?.length && (
-          <div className="bg-[#101D35] rounded-3xl p-6">
-            <h2 className="text-2xl font-black mb-4">Match Notes</h2>
-            <div className="space-y-3">
-              {match.matchNotes.slice(-5).reverse().map((note) => (
-                <p key={note.createdAt} className="text-slate-300">
-                  <span className="font-bold text-cyan-300">{note.role}:</span>{" "}
-                  {note.text}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
+        {!!latestNotes.length && <MatchNotesPanel notes={latestNotes} />}
       </div>
 
-      <NewBatterModal
-        open={showBatterModal}
-        title={
-          !match.striker
-            ? "Select Striker"
-            : !match.nonStriker
-              ? "Select Non-Striker"
-              : "Select New Batter"
-        }
-        players={match.battingTeamPlayers || []}
-        currentStriker={match.striker?.name}
-        currentNonStriker={match.nonStriker?.name}
-        outPlayers={match.outPlayers || []}
-        onSelect={handleNewBatter}
-      />
-
-      <NewBowlerModal
-        open={showBowlerModal}
-        players={match.bowlingTeamPlayers || []}
-        currentBowler={match.currentBowler?.name}
-        onSelect={handleNewBowler}
-      />
-
-      <DismissalModal
-        open={showDismissalModal}
-        fielders={match.bowlingTeamPlayers || []}
-        onClose={() => setShowDismissalModal(false)}
-        onSelect={handleWicketDismissal}
-      />
-
-      <PauseReasonModal
-        open={showPauseModal}
-        onClose={() => setShowPauseModal(false)}
-        onSubmit={handlePauseMatch}
-      />
-    </main>
-  );
-}
-
-function PauseReasonModal({ open, onClose, onSubmit }) {
-  const [reason, setReason] = useState("Rain");
-  const [customReason, setCustomReason] = useState("");
-  const [note, setNote] = useState("");
-
-  if (!open) return null;
-
-  const finalReason = reason === "Other" ? customReason.trim() : reason;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-lg rounded-3xl bg-[#101D35] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black text-white">Pause Reason</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            Close
-          </button>
-        </div>
-
-        <select
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          className="mt-5 h-12 w-full rounded-xl border border-white/10 bg-[#0A1428] px-4 text-white"
-        >
-          {["Rain", "Bad Light", "Ground Issue", "Medical Emergency", "Technical Issue", "Other"].map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-
-        {reason === "Other" && (
-          <input
-            value={customReason}
-            onChange={(event) => setCustomReason(event.target.value)}
-            placeholder="Custom reason"
-            className="mt-4 h-12 w-full rounded-xl border border-white/10 bg-[#0A1428] px-4 text-white"
-          />
-        )}
-
-        <input
-          value={note}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder="Public note"
-          className="mt-4 h-12 w-full rounded-xl border border-white/10 bg-[#0A1428] px-4 text-white"
+      {showBatterModal && (
+        <NewBatterModal
+          open
+          title={
+            !match.striker
+              ? "Select Striker"
+              : !match.nonStriker
+                ? "Select Non-Striker"
+                : "Select New Batter"
+          }
+          players={match.battingTeamPlayers || []}
+          currentStriker={match.striker?.name}
+          currentNonStriker={match.nonStriker?.name}
+          outPlayers={match.outPlayers || []}
+          onSelect={handleNewBatter}
         />
+      )}
 
-        <button
-          disabled={!finalReason}
-          onClick={() => onSubmit({ reason: finalReason, note })}
-          className="mt-6 h-12 w-full rounded-xl bg-cyan-500 font-black text-white disabled:opacity-50"
-        >
-          Confirm Pause
-        </button>
-      </div>
-    </div>
+      {showBowlerModal && (
+        <NewBowlerModal
+          open
+          players={match.bowlingTeamPlayers || []}
+          currentBowler={match.currentBowler?.name}
+          onSelect={handleNewBowler}
+        />
+      )}
+
+      {showDismissalModal && (
+        <DismissalModal
+          fielders={match.bowlingTeamPlayers || []}
+          onClose={() => setShowDismissalModal(false)}
+          onSelect={handleWicketDismissal}
+        />
+      )}
+
+      {showPauseModal && (
+        <PauseReasonModal
+          onClose={() => setShowPauseModal(false)}
+          onSubmit={handlePauseMatch}
+        />
+      )}
+    </main>
   );
 }
 
@@ -1270,75 +1243,8 @@ function ScorerActionToast({ message }) {
   if (!message) return null;
 
   return (
-    <div className="pointer-events-none fixed left-1/2 top-24 z-[70] -translate-x-1/2 rounded-2xl border border-cyan-300/30 bg-[#071224]/95 px-5 py-3 text-center text-lg font-black text-white shadow-2xl">
+    <div className="pointer-events-none fixed left-1/2 top-24 z-[70] -translate-x-1/2 rounded-2xl border border-[var(--vs-gold)]/30 bg-[#071224]/95 px-5 py-3 text-center text-lg font-black text-white shadow-2xl">
       {message}
-    </div>
-  );
-}
-
-function DismissalModal({ open, fielders, onClose, onSelect }) {
-  const [dismissalType, setDismissalType] = useState("bowled");
-  const [fielder, setFielder] = useState("");
-  const needsFielder = ["caught", "run_out", "stumped"].includes(dismissalType);
-
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-xl rounded-3xl bg-[#101D35] p-8">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-3xl font-black text-white">Dismissal Type</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
-            Close
-          </button>
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {[
-            ["bowled", "Bowled"],
-            ["caught", "Caught"],
-            ["lbw", "LBW"],
-            ["run_out", "Run Out"],
-            ["stumped", "Stumped"],
-            ["hit_wicket", "Hit Wicket"],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => setDismissalType(value)}
-              className={`h-12 rounded-xl font-bold ${
-                dismissalType === value
-                  ? "bg-cyan-500 text-white"
-                  : "bg-[#0A1428] text-slate-300"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {needsFielder && (
-          <select
-            value={fielder}
-            onChange={(event) => setFielder(event.target.value)}
-            className="mt-5 h-12 w-full rounded-xl border border-white/10 bg-[#0A1428] px-4 text-white"
-          >
-            <option value="">Select Fielder</option>
-            {fielders.map((player) => (
-              <option key={player} value={player}>
-                {player}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <button
-          disabled={needsFielder && !fielder}
-          onClick={() => onSelect({ dismissalType, fielder })}
-          className="mt-6 h-14 w-full rounded-xl bg-red-500 font-black text-white disabled:opacity-50"
-        >
-          Confirm Wicket
-        </button>
-      </div>
     </div>
   );
 }

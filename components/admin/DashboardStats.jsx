@@ -55,7 +55,7 @@ export default function DashboardStats() {
   }, []);
 
   return (
-    <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <div className="grid w-full max-w-full gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
       <StatCard
         title="Teams"
         value={stats.teams}
@@ -84,12 +84,12 @@ function StatCard({
   value,
 }) {
   return (
-    <div className="bg-[#101D35] rounded-3xl p-6">
-      <p className="text-slate-400">
+    <div className="w-full min-w-0 max-w-full rounded-2xl bg-[#101D35] p-4 sm:p-6 lg:rounded-3xl">
+      <p className="break-words text-base text-slate-400">
         {title}
       </p>
 
-      <h2 className="text-5xl font-black text-white mt-3">
+      <h2 className="mt-3 break-words text-4xl font-black text-white sm:text-5xl">
         {value}
       </h2>
     </div>

@@ -200,7 +200,7 @@ export default function TournamentSettings() {
           </select>
         </label>
 
-        <div className="rounded-2xl border border-white/10 bg-[#101D35] p-5">
+        <div className="min-w-0 rounded-2xl border border-white/10 bg-[#101D35] p-4 sm:p-5">
           <h3 className="text-xl font-black text-white">
             Operations Settings
           </h3>
@@ -268,7 +268,7 @@ export default function TournamentSettings() {
 
         <Button
           onClick={handleSave}
-          className="h-14"
+          className="h-14 w-full sm:w-fit"
         >
           Save Settings
         </Button>
@@ -279,8 +279,8 @@ export default function TournamentSettings() {
 
 function Toggle({ label, checked, onChange }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-xl bg-[#0A1428] px-4 py-3 text-white">
-      <span className="font-semibold">{label}</span>
+    <label className="flex min-h-14 items-center justify-between gap-4 rounded-xl bg-[#0A1428] px-4 py-3 text-white">
+      <span className="min-w-0 break-words font-semibold">{label}</span>
       <input
         type="checkbox"
         checked={Boolean(checked)}

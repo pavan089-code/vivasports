@@ -20,6 +20,7 @@ export default function NewBatterModal({
         items-center
         justify-center
         z-50
+        p-4
       "
     >
 
@@ -29,7 +30,10 @@ export default function NewBatterModal({
           max-w-xl
           bg-[#101D35]
           rounded-3xl
-          p-8
+          p-6
+          sm:p-8
+          max-h-[88vh]
+          overflow-y-auto
         "
       >
 
@@ -37,7 +41,7 @@ export default function NewBatterModal({
           {title}
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {(players || []).map((player) => {
 
   const isDisabled =
@@ -63,7 +67,7 @@ export default function NewBatterModal({
         ${
           isDisabled
             ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-            : "bg-[#1B2A49] text-white hover:bg-cyan-500"
+            : "bg-[#1B2A49] text-white hover:bg-[#D4AF37] hover:text-[#06152F]"
         }
       `}
     >
@@ -79,3 +83,4 @@ export default function NewBatterModal({
     </div>
   );
 }
+

@@ -88,7 +88,7 @@ const itemVariants = {
 };
 
 const overlayEventStyles = {
-  FOUR: "border-cyan-200/75 bg-cyan-500/90 text-white shadow-cyan-950/60",
+  FOUR: "border-[#3AAED8]/75 bg-[#3AAED8]/90 text-white shadow-[#06152F]/60",
   SIX: "border-emerald-200/75 bg-emerald-500/90 text-white shadow-emerald-950/60",
   WICKET: "border-red-200/80 bg-red-600/92 text-white shadow-red-950/70",
 };
@@ -110,7 +110,7 @@ export default function EventAnimation({ event, variant = "default" }) {
   const variants = type === "WICKET" ? wicketVariants : shellVariants;
 
   if (variant === "overlay") {
-    const eventStyle = overlayEventStyles[type] || "border-cyan-200/70 bg-[#06111F]/92 text-white shadow-black/55";
+    const eventStyle = overlayEventStyles[type] || "border-[#D4AF37]/70 bg-[#06152F]/92 text-white shadow-black/55";
 
     return (
       <AnimatePresence>

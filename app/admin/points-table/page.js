@@ -76,16 +76,16 @@ export default function AdminPointsTablePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050B18] px-4 py-8 text-white">
       <section className="mx-auto max-w-7xl space-y-6">
-        <Link href="/admin" className="text-sm font-bold text-cyan-300">
+        <Link href="/admin" className="text-sm font-bold text-[var(--vs-gold)]">
           Back to Admin
         </Link>
 
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-semibold tracking-widest text-cyan-400">
+            <p className="text-sm font-semibold tracking-widest text-[var(--vs-gold)]">
               ADMIN OPERATIONS
             </p>
-            <h1 className="mt-2 text-4xl font-black">Points Table Manager</h1>
+            <h1 className="mt-2 text-3xl font-black sm:text-4xl">Points Table Manager</h1>
             <p className="mt-2 text-slate-400">
               Manual overrides save directly to team documents.
             </p>
@@ -93,7 +93,7 @@ export default function AdminPointsTablePage() {
 
           <button
             onClick={recalculate}
-            className="rounded-xl bg-yellow-300 px-5 py-3 font-black text-black"
+            className="min-h-11 w-full rounded-xl bg-yellow-300 px-5 py-3 font-black text-black sm:w-fit"
           >
             Recalculate Tournament
           </button>
@@ -115,7 +115,7 @@ export default function AdminPointsTablePage() {
               className="rounded-2xl border border-white/10 bg-[#101D35] p-5"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-2xl font-black">{team.name}</h2>
+                <h2 className="break-words text-2xl font-black">{team.name}</h2>
                 {team.manualOverride && (
                   <span className="w-fit rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-bold text-yellow-300">
                     Manual Override
@@ -142,7 +142,7 @@ export default function AdminPointsTablePage() {
 
               <button
                 onClick={() => saveTeam(team)}
-                className="mt-5 rounded-xl bg-cyan-500 px-5 py-3 font-black text-black"
+                className="mt-5 min-h-11 w-full rounded-xl bg-[var(--vs-gold)] px-5 py-3 font-black text-black sm:w-fit"
               >
                 {saving === team.id ? "Saving..." : "Save Standing"}
               </button>
@@ -153,3 +153,4 @@ export default function AdminPointsTablePage() {
     </main>
   );
 }
+

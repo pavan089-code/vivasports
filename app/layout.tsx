@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
@@ -98,6 +98,11 @@ export const metadata: Metadata = {
     images: [socialImage],
     creator: process.env.NEXT_PUBLIC_TWITTER_CREATOR,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

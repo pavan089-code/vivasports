@@ -58,15 +58,15 @@ export default function HistoricalMatchPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050B18] px-4 py-8 text-white">
       <section className="mx-auto max-w-5xl">
-        <Link href="/admin" className="text-sm font-bold text-cyan-300">
+        <Link href="/admin" className="text-sm font-bold text-[var(--vs-gold)]">
           Back to Admin
         </Link>
 
         <div className="mt-6 rounded-2xl border border-white/10 bg-[#101D35] p-5 md:p-8">
-          <p className="text-sm font-semibold tracking-widest text-cyan-400">
+          <p className="text-sm font-semibold tracking-widest text-[var(--vs-gold)]">
             ADMIN OPERATIONS
           </p>
-          <h1 className="mt-2 text-4xl font-black">Historical Match Import</h1>
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Historical Match Import</h1>
           <p className="mt-2 text-slate-400">
             Creates a completed match and rebuilds standings. No ball-by-ball
             scorecard data is required.
@@ -106,7 +106,7 @@ export default function HistoricalMatchPage() {
 
           <button
             onClick={submitHistoricalMatch}
-            className="mt-8 rounded-xl bg-cyan-500 px-6 py-3 font-black text-black"
+            className="mt-8 min-h-11 w-full rounded-xl bg-[var(--vs-gold)] px-6 py-3 font-black text-black sm:w-fit"
           >
             {saving ? "Importing..." : "Import Historical Match"}
           </button>
@@ -149,3 +149,4 @@ function SelectTeam({ label, value, teams, onChange, includeTie = false }) {
     </label>
   );
 }
+

@@ -26,15 +26,15 @@ export default function AuditPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#050B18] px-4 py-8 text-white">
       <section className="mx-auto max-w-7xl space-y-6">
-        <Link href="/admin" className="text-sm font-bold text-cyan-300">
+        <Link href="/admin" className="text-sm font-bold text-[var(--vs-gold)]">
           Back to Admin
         </Link>
 
         <div>
-          <p className="text-sm font-semibold tracking-widest text-cyan-400">
+          <p className="text-sm font-semibold tracking-widest text-[var(--vs-gold)]">
             ADMIN OPERATIONS
           </p>
-          <h1 className="mt-2 text-4xl font-black">Audit Mode</h1>
+          <h1 className="mt-2 text-3xl font-black sm:text-4xl">Audit Mode</h1>
           <p className="mt-2 text-slate-400">
             Compares stored team standings with values calculated from completed,
             historical, abandoned, and walkover matches.
@@ -45,10 +45,10 @@ export default function AuditPage() {
           {rows.map(({ team, calculated, mismatches }) => (
             <article
               key={team.id}
-              className="rounded-2xl border border-white/10 bg-[#101D35] p-5"
+              className="min-w-0 rounded-2xl border border-white/10 bg-[#101D35] p-4 sm:p-5"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-2xl font-black">{team.name}</h2>
+                <h2 className="break-words text-2xl font-black">{team.name}</h2>
                 <span
                   className={`w-fit rounded-full px-3 py-1 text-sm font-bold ${
                     mismatches.length
@@ -60,7 +60,40 @@ export default function AuditPage() {
                 </span>
               </div>
 
-              <div className="mt-5 overflow-x-auto rounded-xl bg-[#0A1428]">
+              <div className="mt-5 grid gap-3 sm:hidden">
+                {fields.map((field) => {
+                  const mismatch = mismatches.includes(field);
+
+                  return (
+                    <div
+                      key={field}
+                      className={`rounded-xl bg-[#0A1428] p-4 ${
+                        mismatch ? "border border-red-400/30" : ""
+                      }`}
+                    >
+                      <p className="text-sm font-bold uppercase text-slate-400">
+                        {field}
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-base">
+                        <div>
+                          <p className="text-sm text-slate-400">Stored</p>
+                          <p className="break-words font-black text-white">
+                            {team[field] ?? 0}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-slate-400">Calculated</p>
+                          <p className="break-words font-black text-white">
+                            {calculated[field] ?? 0}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 hidden overflow-x-auto rounded-xl bg-[#0A1428] sm:block">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="border-b border-white/10 text-slate-400">
@@ -96,3 +129,4 @@ export default function AuditPage() {
     </main>
   );
 }
+

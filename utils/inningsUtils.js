@@ -1,7 +1,9 @@
+import { getInningsBallLimit } from "@/utils/matchConfigUtils";
+
 export function isInningsComplete(match) {
   const oversFinished =
     match.totalBalls >=
-    match.oversLimit * 6;
+    getInningsBallLimit(match);
 
   const allOut =
     match.wickets >= 10;

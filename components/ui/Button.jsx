@@ -3,6 +3,7 @@ export default function Button({
   className = "",
   variant = "primary",
   type = "button",
+  ...props
 }) {
   const variants = {
     primary:
@@ -23,6 +24,7 @@ export default function Button({
 
   return (
     <button
+      {...props}
       type={type}
       className={`
         px-6 py-3

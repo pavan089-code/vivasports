@@ -23,7 +23,7 @@ export default function FixturesList() {
 
   return (
     <section className="max-w-7xl mx-auto py-10 px-4">
-      <div className="mb-8">
+      <div className="mb-6 md:mb-8">
         <p className="vs-eyebrow">
           TOURNAMENT FIXTURES
         </p>
@@ -37,17 +37,21 @@ export default function FixturesList() {
 
       <div className="grid gap-4">
         {matches.map((match) => (
-          <article
+          <Link
             key={match.id}
+            href={`/live/${match.id}`}
             className="vs-card p-5 md:p-6"
           >
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
+                <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-[var(--vs-gold)]">
+                  {match.matchStage || "Fixture"}
+                </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-2xl font-black text-white">
                     {match.teamA}
                   </h2>
-                  <span className="text-slate-500 font-bold">vs</span>
+                  <span className="font-bold text-slate-300">vs</span>
                   <h2 className="text-2xl font-black text-white">
                     {match.teamB}
                   </h2>
@@ -64,15 +68,12 @@ export default function FixturesList() {
                 <span className="rounded-full bg-[var(--vs-gold)]/15 px-3 py-1 text-sm font-bold text-[var(--vs-gold-soft)] capitalize">
                   {match.status}
                 </span>
-                <Link
-                  href={`/live/${match.id}`}
-                  className="rounded-lg bg-[var(--vs-gold)] px-4 py-2 text-sm font-black uppercase text-[#050B18]"
-                >
+                <span className="rounded-lg bg-[var(--vs-gold)] px-4 py-2 text-sm font-black uppercase text-[#050B18]">
                   Match Page
-                </Link>
+                </span>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
 
         {matches.length === 0 && (

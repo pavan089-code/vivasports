@@ -56,7 +56,7 @@ export default function MatchCenter() {
         subtitle="Latest completed matches"
         matches={completedMatches}
         emptyText="No completed matches yet."
-        accent="cyan"
+        accent="gold"
       />
     </section>
   );
@@ -79,7 +79,7 @@ function MatchSection({
 
         <Link
           href={title === "Recent Results" ? "/results" : "/fixtures"}
-          className="w-fit rounded-xl bg-[#101D35] px-4 py-2 text-sm font-semibold text-cyan-300"
+          className="w-fit rounded-xl bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--vs-gold-soft)]"
         >
           View All
         </Link>
@@ -104,7 +104,7 @@ function MatchCard({ match, accent }) {
   const badgeClass = {
     red: "bg-red-500/15 text-red-300",
     yellow: "bg-yellow-500/15 text-yellow-300",
-    cyan: "bg-cyan-500/15 text-cyan-300",
+    gold: "bg-[var(--vs-gold)]/15 text-[var(--vs-gold-soft)]",
   }[accent];
 
   return (
@@ -145,7 +145,7 @@ function MatchCard({ match, accent }) {
 
       <Link
         href={`/live/${match.id}`}
-        className="mt-5 inline-flex rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-white"
+        className="mt-5 inline-flex rounded-xl bg-[var(--vs-gold)] px-4 py-2 text-sm font-semibold text-[#06152F] hover:bg-[#E5C158]"
       >
         View Match
       </Link>

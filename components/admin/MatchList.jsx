@@ -113,19 +113,19 @@ export default function MatchList() {
         {matches.map((match) => (
           <div
             key={match.id}
-            className="rounded-2xl border border-white/10 bg-[#101D35] p-5"
+            className="min-w-0 rounded-2xl border border-white/10 bg-[#101D35] p-4 sm:p-5"
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-white">
+              <div className="min-w-0">
+                <h3 className="break-words text-xl font-bold leading-snug text-white">
                   {match.teamA} vs {match.teamB}
                 </h3>
 
-                <p className="text-slate-400 mt-2">
+                <p className="mt-2 break-words text-base text-slate-400">
                   {[match.date, match.time].filter(Boolean).join(" | ") || "Schedule TBA"}
                 </p>
 
-                <p className="text-slate-400">
+                <p className="break-words text-base text-slate-400">
                   {match.ground || "Ground TBA"}
                 </p>
               </div>
@@ -140,11 +140,11 @@ export default function MatchList() {
               {match.resultType === "walkover" && <WarningBadge label="Walkover" />}
             </div>
 
-            <div className="flex flex-wrap gap-3 mt-5">
+            <div className="mt-5 grid grid-cols-1 gap-3 sm:flex sm:flex-wrap">
               {match.status === "scheduled" && (
                 <button
                   onClick={() => startMatch(match.id)}
-                  className="rounded-xl bg-green-500 px-4 py-2 font-medium text-white"
+                  className="min-h-11 rounded-xl bg-green-500 px-4 py-2 font-medium text-white"
                 >
                   Start Match
                 </button>
@@ -153,7 +153,7 @@ export default function MatchList() {
               {match.status === "live" && (
                 <button
                   onClick={() => completeMatch(match)}
-                  className="rounded-xl bg-yellow-500 px-4 py-2 font-medium text-white"
+                  className="min-h-11 rounded-xl bg-yellow-500 px-4 py-2 font-medium text-white"
                 >
                   Complete Match
                 </button>
@@ -162,7 +162,7 @@ export default function MatchList() {
               {match.status === "live" && (
                 <button
                   onClick={() => setReasonModal({ type: "pause", match })}
-                  className="rounded-xl bg-orange-500 px-4 py-2 font-medium text-white"
+                  className="min-h-11 rounded-xl bg-orange-500 px-4 py-2 font-medium text-white"
                 >
                   Pause
                 </button>
@@ -171,7 +171,7 @@ export default function MatchList() {
               {match.status === "paused" && (
                 <button
                   onClick={() => handleResume(match)}
-                  className="rounded-xl bg-green-500 px-4 py-2 font-medium text-white"
+                  className="min-h-11 rounded-xl bg-green-500 px-4 py-2 font-medium text-white"
                 >
                   Resume
                 </button>
@@ -181,13 +181,13 @@ export default function MatchList() {
                 <>
                   <button
                     onClick={() => handleRevisedTarget(match)}
-                    className="rounded-xl bg-purple-500 px-4 py-2 font-medium text-white"
+                    className="min-h-11 rounded-xl bg-purple-500 px-4 py-2 font-medium text-white"
                   >
                     Revised Target
                   </button>
                   <button
                     onClick={() => setReasonModal({ type: "abandon", match })}
-                    className="rounded-xl bg-slate-600 px-4 py-2 font-medium text-white"
+                    className="min-h-11 rounded-xl bg-slate-600 px-4 py-2 font-medium text-white"
                   >
                     Mark Abandoned
                   </button>
@@ -197,7 +197,7 @@ export default function MatchList() {
               {match.status === "scheduled" && (
                 <button
                   onClick={() => handleWalkover(match)}
-                  className="rounded-xl bg-fuchsia-500 px-4 py-2 font-medium text-white"
+                  className="min-h-11 rounded-xl bg-fuchsia-500 px-4 py-2 font-medium text-white"
                 >
                   Walkover
                 </button>
@@ -205,7 +205,7 @@ export default function MatchList() {
 
               <button
                 onClick={() => handleNote(match)}
-                className="rounded-xl bg-[#1B2A49] px-4 py-2 text-white"
+                className="min-h-11 rounded-xl bg-[#1B2A49] px-4 py-2 text-white"
               >
                 Add Note
               </button>
@@ -214,7 +214,7 @@ export default function MatchList() {
                 href={`/scorer/${match.id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-xl bg-cyan-500 px-4 py-2 text-white"
+                className="flex min-h-11 items-center justify-center rounded-xl bg-[var(--vs-gold)] px-4 py-2 font-bold text-[#06152F]"
               >
                 Scorer
               </Link>
@@ -223,14 +223,14 @@ export default function MatchList() {
                 href={`/live/${match.id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-xl bg-blue-500 px-4 py-2 text-white"
+                className="flex min-h-11 items-center justify-center rounded-xl bg-blue-500 px-4 py-2 text-white"
               >
                 Live
               </Link>
 
               <button
                 onClick={() => handleDelete(match.id)}
-                className="rounded-xl bg-red-500 px-4 py-2 text-white"
+                className="min-h-11 rounded-xl bg-red-500 px-4 py-2 text-white"
               >
                 Delete Match
               </button>
@@ -320,7 +320,7 @@ function ReasonModal({ config, onClose, onSubmit }) {
         <button
           disabled={!finalReason}
           onClick={() => onSubmit({ reason: finalReason, note })}
-          className="mt-6 h-12 w-full rounded-xl bg-cyan-500 font-black text-white disabled:opacity-50"
+          className="mt-6 h-12 w-full rounded-xl bg-[var(--vs-gold)] font-black text-[#06152F] disabled:opacity-50"
         >
           Confirm
         </button>
@@ -335,7 +335,7 @@ function StatusBadge({ status }) {
     live: "bg-green-500/20 text-green-300",
     paused: "bg-orange-500/20 text-orange-300",
     innings_break: "bg-purple-500/20 text-purple-300",
-    completed: "bg-cyan-500/20 text-cyan-300",
+    completed: "bg-[var(--vs-gold)]/20 text-[var(--vs-gold)]",
     abandoned: "bg-slate-500/20 text-slate-300",
   };
 
@@ -357,3 +357,4 @@ function WarningBadge({ label }) {
     </span>
   );
 }
+

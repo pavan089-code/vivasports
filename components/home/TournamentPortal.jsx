@@ -124,6 +124,20 @@ function getRequiredLine(match) {
   };
 }
 
+function getMatchPriority(match) {
+  if (match.featured) return 1;
+
+  const stage = String(match.matchStage || "").toLowerCase();
+  if (stage.includes("final") && !stage.includes("semi") && !stage.includes("quarter")) return 2;
+  if (stage.includes("semi")) return 3;
+  if (stage.includes("quarter")) return 4;
+  return 5;
+}
+
+function sortLiveMatches(matches) {
+  return [...matches].sort((a, b) => getMatchPriority(a) - getMatchPriority(b));
+}
+
 function getBestStrikeRate(players) {
   return [...players]
     .filter((player) => (player.runs || 0) > 0 && (player.ballsFaced || 0) > 0)
@@ -170,7 +184,7 @@ export default function TournamentPortal() {
   }, []);
 
   const liveMatches = useMemo(
-    () => matches.filter((match) => liveStatuses.includes(match.status)),
+    () => sortLiveMatches(matches.filter((match) => liveStatuses.includes(match.status))),
     [matches]
   );
   const upcomingMatches = useMemo(
@@ -189,6 +203,8 @@ export default function TournamentPortal() {
       ).slice(0, 3),
     [matches]
   );
+  const primaryLiveMatch = liveMatches[0];
+  const secondaryLiveMatches = liveMatches.slice(1);
   const rankedTeams = useMemo(() => rankTeams(teams), [teams]);
   const topBatter = useMemo(() => getTopBatters(players)[0], [players]);
   const topBowler = useMemo(() => getTopBowlers(players)[0], [players]);
@@ -216,52 +232,42 @@ export default function TournamentPortal() {
 
   return (
     <div className="bg-[radial-gradient(circle_at_top,#18233B_0%,#050914_45%,#020611_100%)] text-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-6 sm:px-6 lg:px-8">
-        <HeroSection
-          tournamentName={tournamentName}
-          tournamentStage={tournamentStage}
-          tournamentStatus={tournamentStatus}
-          completedCount={completedCount}
-          remainingCount={remainingCount}
-          teamsCount={teams.length}
-          liveCount={liveMatches.length}
-        />
-
-        <section className="space-y-5">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-4 sm:gap-10 sm:px-6 sm:py-6 lg:px-8">
+        <section className="space-y-4">
           <SectionHeader
             icon={CirclePlay}
-            title="Live Matches"
-            subtitle="The centrepiece of the tournament"
+            title="Live Match Center"
+            subtitle="Score, stream and match situation"
             href="/live"
             action="Live Centre"
           />
           {loading ? (
             <SkeletonGrid />
-          ) : liveMatches.length ? (
-            <div className="grid gap-5">
-              {liveMatches.map((match) => (
-                <LiveMatchCard key={match.id} match={match} />
-              ))}
+          ) : primaryLiveMatch ? (
+            <div className="space-y-4">
+              <LiveMatchCard
+                match={primaryLiveMatch}
+                tournamentName={primaryLiveMatch.tournamentName || tournamentName}
+                tournamentYear={primaryLiveMatch.tournamentYear}
+              />
+              {secondaryLiveMatches.length > 0 && (
+                <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+                  <div className="flex snap-x gap-4">
+                    {secondaryLiveMatches.map((match) => (
+                      <div key={match.id} className="w-[86vw] shrink-0 snap-start sm:w-[26rem]">
+                        <CompactLiveMatchCard match={match} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <EmptyCard
-              title="No live matches"
-              body="Live action will take over this section as soon as play begins."
-            />
+            <RecentResultHero match={recentResults[0]} />
           )}
         </section>
 
-        <SnapshotSection
-          teams={teams.length}
-          matches={matches.length}
-          completed={completedCount}
-          live={liveMatches.length}
-          upcoming={upcomingMatches.length}
-        />
-
-        <SeoOverviewSection />
-
-        <div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="space-y-5">
             <SectionHeader
               icon={CalendarDays}
@@ -307,19 +313,19 @@ export default function TournamentPortal() {
           </section>
         </div>
 
-        <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <section className="space-y-5">
             <SectionHeader
               icon={BarChart3}
               title="Points Table Preview"
               subtitle="Top five teams in the race"
-              href="/points_table"
+              href="/pointstable"
               action="View Full Table"
             />
             <PointsPreview teams={rankedTeams.slice(0, 5)} />
           </section>
 
-          <section className="space-y-5">
+          <section className="hidden space-y-5 md:block">
             <SectionHeader
               icon={Trophy}
               title="Top Performers"
@@ -336,7 +342,27 @@ export default function TournamentPortal() {
           </section>
         </div>
 
-        <section className="space-y-5">
+        <HeroSection
+          tournamentName={tournamentName}
+          tournamentStage={tournamentStage}
+          tournamentStatus={tournamentStatus}
+          completedCount={completedCount}
+          remainingCount={remainingCount}
+          teamsCount={teams.length}
+          liveCount={liveMatches.length}
+        />
+
+        <SnapshotSection
+          teams={teams.length}
+          matches={matches.length}
+          completed={completedCount}
+          live={liveMatches.length}
+          upcoming={upcomingMatches.length}
+        />
+
+        <SeoOverviewSection />
+
+        <section className="hidden space-y-5 md:block">
           <SectionHeader
             icon={Medal}
             title="Tournament Records"
@@ -352,7 +378,7 @@ export default function TournamentPortal() {
 
         <SponsorsSection tiers={sponsorTiers} />
 
-        <section className="space-y-5 pb-6">
+        <section className="hidden space-y-5 pb-6 md:block">
           <SectionHeader
             icon={Sparkles}
             title="Quick Access"
@@ -369,7 +395,7 @@ export default function TournamentPortal() {
                   <Icon className="h-5 w-5 text-[#D8B45A]" />
                   {label}
                 </span>
-                <ChevronRight className="h-5 w-5 text-slate-500 transition group-hover:text-[#F1D58A]" />
+                <ChevronRight className="h-5 w-5 text-slate-300 transition group-hover:text-[#F1D58A]" />
               </Link>
             ))}
           </div>
@@ -499,23 +525,40 @@ function SectionHeader({ icon: Icon, title, subtitle, href, action }) {
   );
 }
 
-function LiveMatchCard({ match }) {
+function LiveMatchCard({ match, tournamentName, tournamentYear }) {
   const requirement = getRequiredLine(match);
+  const stage = match.matchStage || "League Match";
+  const rrr =
+    match.target && requirement.balls !== "-"
+      ? ((Number(requirement.runs) / Math.max(Number(requirement.balls), 1)) * 6).toFixed(2)
+      : "-";
 
   return (
     <article className="overflow-hidden rounded-2xl border border-[#D8B45A]/25 bg-[#07101F] shadow-2xl shadow-black/30">
-      <div className="border-b border-white/10 bg-black/25 px-5 py-4">
+      <div className="border-b border-white/10 bg-black/25 px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-black uppercase text-red-200">
-            Live Match
-          </span>
-          <span className="text-sm font-semibold text-slate-300">
-            {match.status} | {match.ground || "Ground TBA"}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-[var(--emerald)] px-3 py-1 text-xs font-black uppercase text-white">
+              Live
+            </span>
+            {match.featured && (
+              <span className="rounded-full bg-[#D8B45A] px-3 py-1 text-xs font-black uppercase text-[#050914]">
+                Featured
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-300 sm:text-sm">
+            {match.ground || "Ground TBA"}
           </span>
         </div>
+        <p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-[#D8B45A]">
+          {[tournamentName || match.tournamentName, tournamentYear || match.tournamentYear, stage]
+            .filter(Boolean)
+            .join(" | ")}
+        </p>
       </div>
 
-      <div className="grid gap-6 p-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:p-7">
+      <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:p-7">
         <TeamScore
           team={match.battingTeam || match.teamA}
           score={getScoreLine(match)}
@@ -536,28 +579,22 @@ function LiveMatchCard({ match }) {
         />
       </div>
 
-      <div className="grid gap-3 border-t border-white/10 px-5 py-5 sm:grid-cols-[1fr_auto] sm:items-center lg:px-7">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <MiniStat label="Status" value={match.status || "Live"} />
-          <MiniStat label="Required Runs" value={requirement.runs} />
-          <MiniStat label="Required Balls" value={requirement.balls} />
+      <div className="grid gap-3 border-t border-white/10 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center lg:px-7">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <MiniStat label="Target" value={match.target || "-"} />
+          <MiniStat label="Need" value={requirement.runs} />
+          <MiniStat label="RRR" value={rrr} />
         </div>
         <div className="flex flex-wrap gap-3">
           <Link
             href={`/live/${match.id}`}
-            className="rounded-xl bg-[#D8B45A] px-4 py-2 text-sm font-black uppercase text-[#050914]"
+            className="min-h-11 rounded-xl bg-[#D8B45A] px-4 py-2 text-sm font-black uppercase text-[#050914]"
           >
             Watch Live
           </Link>
           <Link
-            href={`/live/${match.id}`}
-            className="rounded-xl border border-[#D8B45A]/30 px-4 py-2 text-sm font-black uppercase text-[#F1D58A]"
-          >
-            Live Score
-          </Link>
-          <Link
             href={`/scorecard/${match.id}`}
-            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-black uppercase text-white"
+            className="min-h-11 rounded-xl border border-white/10 px-4 py-2 text-sm font-black uppercase text-white"
           >
             Scorecard
           </Link>
@@ -570,11 +607,11 @@ function LiveMatchCard({ match }) {
 function TeamScore({ team, score, overs, highlight = false }) {
   return (
     <div className={highlight ? "text-left lg:text-right" : "text-left"}>
-      <p className="text-2xl font-black uppercase text-white sm:text-3xl">
+      <p className="text-xl font-black uppercase text-white sm:text-3xl">
         {team || "Team TBA"}
       </p>
-      <p className="mt-3 text-5xl font-black text-white sm:text-6xl">{score}</p>
-      <p className="mt-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+      <p className="mt-2 text-5xl font-black text-white sm:text-6xl">{score}</p>
+      <p className="mt-1 text-sm font-bold uppercase tracking-wider text-slate-400">
         {overs} overs
       </p>
     </div>
@@ -583,12 +620,72 @@ function TeamScore({ team, score, overs, highlight = false }) {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-3">
-      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+    <div className="rounded-xl border border-white/10 bg-black/20 p-2.5 sm:p-3">
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-300">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-white">{value}</p>
+      <p className="mt-1 text-lg font-black text-white sm:text-xl">{value}</p>
     </div>
+  );
+}
+
+function CompactLiveMatchCard({ match }) {
+  return (
+    <Link
+      href={`/live/${match.id}`}
+      className="block rounded-xl border border-[#D8B45A]/20 bg-[#07101F] p-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="rounded-full bg-[var(--emerald)] px-3 py-1 text-xs font-black uppercase text-white">
+          {match.matchStage || "Live"}
+        </span>
+        <span className="text-sm font-bold text-[#F1D58A]">
+          {getScoreLine(match)} ({getOversLine(match)})
+        </span>
+      </div>
+      <h3 className="mt-3 text-lg font-black text-white">
+        {match.teamA} vs {match.teamB}
+      </h3>
+      <p className="mt-2 text-sm text-slate-300">{match.ground || "Ground TBA"}</p>
+    </Link>
+  );
+}
+
+function RecentResultHero({ match }) {
+  if (!match) {
+    return (
+      <EmptyCard
+        title="No live matches"
+        body="Live action and recent results will appear here as soon as matches begin."
+      />
+    );
+  }
+
+  return (
+    <article className="rounded-2xl border border-[#D8B45A]/20 bg-[#07101F] p-5 shadow-2xl shadow-black/30">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#D8B45A]">
+        Most Recent Result
+      </p>
+      <h2 className="mt-3 text-2xl font-black text-white">
+        {match.winner || "No Result"}
+      </h2>
+      <p className="mt-2 text-lg font-bold text-[var(--vs-success)]">
+        {getResultText(match)}
+      </p>
+      <p className="mt-3 text-slate-300">
+        {match.teamA} vs {match.teamB}
+      </p>
+      <div className="mt-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+        <p>{match.teamA}: {match.firstInningsScore ?? "-"}/{match.firstInningsWickets ?? "-"}</p>
+        <p>{match.teamB}: {match.secondInningsScore ?? "-"}/{match.secondInningsWickets ?? "-"}</p>
+      </div>
+      <Link
+        href={`/scorecard/${match.id}`}
+        className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#D8B45A] px-4 py-2 text-sm font-black uppercase text-[#050914]"
+      >
+        View Scorecard
+      </Link>
+    </article>
   );
 }
 
@@ -602,7 +699,7 @@ function SnapshotSection({ teams, matches, completed, live, upcoming }) {
   ];
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <section className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-5">
       {cards.map(([label, value]) => (
         <div
           key={label}
@@ -647,7 +744,7 @@ function SeoOverviewSection() {
   ];
 
   return (
-    <section className="rounded-2xl border border-[#D8B45A]/15 bg-[#07101F] p-5 sm:p-7">
+    <section className="hidden rounded-2xl border border-[#D8B45A]/15 bg-[#07101F] p-5 sm:p-7 md:block">
       <div className="max-w-3xl">
         <p className="text-xs font-black uppercase tracking-[0.24em] text-[#D8B45A]">
           Viva Sports India
@@ -898,7 +995,7 @@ function RecordsPanel({ stats, highestPartnership }) {
 
 function SponsorsSection({ tiers }) {
   return (
-    <section className="space-y-5">
+    <section className="hidden space-y-5 md:block">
       <SectionHeader
         icon={Star}
         title="Sponsors"

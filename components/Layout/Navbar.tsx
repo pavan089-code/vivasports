@@ -12,7 +12,7 @@ const primaryLinks = [
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
-  ["Points Table", "/points_table"],
+  ["Points Table", "/pointstable"],
 ];
 
 const secondaryLinks = [
@@ -118,7 +118,7 @@ export default function Navbar() {
       {open && (
         <div className="border-t border-[#D8B45A]/15 bg-[#020611] lg:hidden">
           <div className="mx-auto grid max-w-7xl gap-2 px-4 py-5 text-white">
-            {[...primaryLinks, ...secondaryLinks].map(([label, href]) => (
+            {primaryLinks.map(([label, href]) => (
               <Link
                 key={href}
                 href={href}
@@ -128,6 +128,32 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
+
+            <button
+              onClick={() => setMoreOpen((value) => !value)}
+              className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 text-left font-semibold"
+              aria-expanded={moreOpen}
+            >
+              More
+              <ChevronDown
+                className={`h-4 w-4 transition ${moreOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {moreOpen && (
+              <div className="grid gap-2 rounded-xl border border-[#D8B45A]/15 bg-[#07101F]/70 p-2">
+                {secondaryLinks.map(([label, href]) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={closeMenus}
+                    className="rounded-lg px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -30,15 +30,15 @@ export default function TeamList() {
   }, []);
 
   return (
-    <div className="bg-[#101D35] rounded-3xl p-6">
+    <div className="w-full min-w-0 rounded-2xl bg-[#101D35] p-4 sm:p-6 lg:rounded-3xl">
       <h2 className="text-2xl font-bold text-white mb-6">Existing Teams</h2>
 
       <div
         className="
     grid
-  space-y-6
     gap-6
     items-start
+    min-w-0
   "
       >
         {teams.map((team) => {
@@ -53,18 +53,18 @@ export default function TeamList() {
           return (
             <div
               key={team.id}
-              className="bg-[#0A1428] rounded-3xl border border-white/5 hover:border-cyan-500/30 transition-all p-6"
+              className="min-w-0 rounded-2xl border border-white/5 bg-[#0A1428] p-4 transition-all hover:border-[var(--vs-gold)]/30 sm:p-6 lg:rounded-3xl"
             >
               <div className="flex items-start justify-between">
-                <div className="flex gap-4">
-                  <div className="w-14 h-14 rounded-full bg-cyan-500/20 flex items-center justify-center text-2xl">
+                <div className="flex min-w-0 gap-3 sm:gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--vs-gold)]/20 text-xl sm:h-14 sm:w-14 sm:text-2xl">
                     🏏
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">
+                  <div className="min-w-0">
+                    <h3 className="break-words text-xl font-bold leading-snug text-white">
                       {team.name}
                     </h3>
-                    <p className="text-slate-400">Captain: {team.captain}</p>
+                    <p className="mt-1 break-words text-base text-slate-400">Captain: {team.captain || "TBA"}</p>
                   </div>
                 </div>
               </div>
@@ -89,3 +89,4 @@ export default function TeamList() {
     </div>
   );
 }
+
