@@ -10,6 +10,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 import ShareButton from "@/components/ui/ShareButton";
 import LiveStream from "@/components/live/LiveStream";
+import SponsorBanner from "@/components/sponsors/SponsorBanner";
 import { calculatePartnerships } from "@/utils/cricketIntelligenceUtils";
 import {
   getBallsRemaining,
@@ -34,7 +35,7 @@ function getResultText(result) {
   return result.result || "";
 }
 
-export default function LiveMatchScreen({ matchId }) {
+export default function LiveMatchScreen({ matchId, sponsors = [] }) {
   const { match, loading } = useMatch(matchId);
   const [event, setEvent] = useState(null);
   const [showStickyScore, setShowStickyScore] = useState(false);
@@ -337,6 +338,8 @@ export default function LiveMatchScreen({ matchId }) {
             <CurrentOver balls={match.currentOver || []} />
           </div>
         </section>
+
+        <SponsorBanner sponsors={sponsors} />
 
         {streamAvailable ? (
           <LiveStream match={match} />

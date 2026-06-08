@@ -8,10 +8,11 @@ const quickLinks = [
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
-  ["Points Table", "/pointstable"],
+  ["Sponsors", "/sponsors"],
 ];
 
 const tournamentLinks = [
+  ["Points Table", "/pointstable"],
   ["Teams", "/teams"],
   ["Players", "/players"],
   ["Leaderboards", "/leaderboards"],
@@ -89,9 +90,12 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 font-semibold text-white">Sponsors</h3>
             <div className="space-y-2 text-sm text-slate-400">
-              <p>Gold Sponsors</p>
-              <p>Silver Sponsors</p>
-              <p>Partner Sponsors</p>
+              <Link
+                href="/sponsors"
+                className="block transition hover:text-[#F1D58A]"
+              >
+                All Sponsors
+              </Link>
             </div>
 
             <h3 className="mb-4 mt-7 font-semibold text-white">Social Links</h3>

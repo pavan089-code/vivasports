@@ -15,13 +15,7 @@ const defaultBroadcastSettings = {
   sponsorInterval: 8,
   sponsors: [],
   sponsorTiers: {
-    gold: [
-      {
-        name: "Viva Sports",
-        logo: "",
-        link: "",
-      },
-    ],
+    gold: [],
     silver: [],
     partners: [],
   },

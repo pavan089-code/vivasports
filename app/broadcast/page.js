@@ -119,7 +119,7 @@ export default function BroadcastControlPage() {
     };
 
     sponsorTiers[category].push({
-      name: "New Sponsor",
+      name: "",
       logo: "",
       link: "",
     });

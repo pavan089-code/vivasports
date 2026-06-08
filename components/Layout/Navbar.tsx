@@ -12,10 +12,11 @@ const primaryLinks = [
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
-  ["Points Table", "/pointstable"],
+  ["Sponsors", "/sponsors"],
 ];
 
 const secondaryLinks = [
+  ["Points Table", "/pointstable"],
   ["Teams", "/teams"],
   ["Players", "/players"],
   ["Leaderboards", "/leaderboards"],

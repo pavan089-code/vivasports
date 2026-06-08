@@ -1,4 +1,5 @@
 import LiveMatchScreen from "@/components/live/LiveMatchScreen";
+import { sponsors } from "@/Lib/sponsors";
 
 export async function generateMetadata({ params }) {
   const { matchId } = await params;
@@ -19,6 +20,6 @@ export default async function LivePage({
   const { matchId } = await params;
 
   return (
-    <LiveMatchScreen matchId={matchId} />
+    <LiveMatchScreen matchId={matchId} sponsors={sponsors} />
   );
 }

@@ -17,7 +17,8 @@ import {
   Users,
 } from "lucide-react";
 
-import sponsors from "@/data/Sponsers";
+import FeaturedSponsorCarousel from "@/components/sponsors/FeaturedSponsorCarousel";
+import SponsorGrid from "@/components/sponsors/SponsorGrid";
 import { getSettings } from "@/services/SettingServices";
 import { subscribeToMatches } from "@/services/matchService";
 import { getPlayerStats } from "@/services/playerStatsService";
@@ -150,15 +151,8 @@ function getBestStrikeRate(players) {
     })[0];
 }
 
-function splitSponsorTiers(items) {
-  return {
-    gold: items.slice(0, 2),
-    silver: items.slice(2, 4),
-    partners: items.slice(4),
-  };
-}
-
-export default function TournamentPortal() {
+export default function TournamentPortal({ sponsors }) {
+  const sponsorItems = sponsors || [];
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
@@ -228,11 +222,22 @@ export default function TournamentPortal() {
     upcomingMatches.length,
     completedCount
   );
-  const sponsorTiers = splitSponsorTiers(sponsors);
 
   return (
     <div className="bg-[radial-gradient(circle_at_top,#18233B_0%,#050914_45%,#020611_100%)] text-white">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-4 sm:gap-10 sm:px-6 sm:py-6 lg:px-8">
+        <HeroSection
+          tournamentName={tournamentName}
+          tournamentStage={tournamentStage}
+          tournamentStatus={tournamentStatus}
+          completedCount={completedCount}
+          remainingCount={remainingCount}
+          teamsCount={teams.length}
+          liveCount={liveMatches.length}
+        />
+
+        <SponsorsSection sponsors={sponsorItems} />
+
         <section className="space-y-4">
           <SectionHeader
             icon={CirclePlay}
@@ -342,16 +347,6 @@ export default function TournamentPortal() {
           </section>
         </div>
 
-        <HeroSection
-          tournamentName={tournamentName}
-          tournamentStage={tournamentStage}
-          tournamentStatus={tournamentStatus}
-          completedCount={completedCount}
-          remainingCount={remainingCount}
-          teamsCount={teams.length}
-          liveCount={liveMatches.length}
-        />
-
         <SnapshotSection
           teams={teams.length}
           matches={matches.length}
@@ -375,8 +370,6 @@ export default function TournamentPortal() {
             highestPartnership={matchAnalytics.highestPartnerships?.[0]}
           />
         </section>
-
-        <SponsorsSection tiers={sponsorTiers} />
 
         <section className="hidden space-y-5 pb-6 md:block">
           <SectionHeader
@@ -993,48 +986,31 @@ function RecordsPanel({ stats, highestPartnership }) {
   );
 }
 
-function SponsorsSection({ tiers }) {
+function SponsorsSection({ sponsors }) {
   return (
-    <section className="hidden space-y-5 md:block">
-      <SectionHeader
-        icon={Star}
-        title="Sponsors"
-        subtitle="Tournament partners powering the competition"
-      />
-      <div className="overflow-hidden rounded-2xl border border-[#D8B45A]/15 bg-[#07101F] p-5">
-        <SponsorTier title="Gold Sponsors" items={tiers.gold} emphasis />
-        <SponsorTier title="Silver Sponsors" items={tiers.silver} />
-        <SponsorTier title="Partner Sponsors" items={tiers.partners} />
+    <section className="space-y-8">
+      <div className="space-y-5">
+        <SectionHeader
+          icon={Trophy}
+          title="🏆 Title Sponsors"
+          subtitle="Premier tournament partners in the spotlight"
+          href="/sponsors"
+          action="View All"
+        />
+        <FeaturedSponsorCarousel sponsors={sponsors} />
+      </div>
+
+      <div className="space-y-5">
+        <SectionHeader
+          icon={Star}
+          title="Our Sponsors"
+          subtitle="Tournament partners powering the competition"
+          href="/sponsors"
+          action="View All"
+        />
+        <SponsorGrid sponsors={sponsors} />
       </div>
     </section>
-  );
-}
-
-function SponsorTier({ title, items, emphasis = false }) {
-  if (!items.length) return null;
-
-  return (
-    <div className="mb-6 last:mb-0">
-      <p className="mb-3 text-xs font-black uppercase tracking-[0.24em] text-[#D8B45A]">
-        {title}
-      </p>
-      <div className="overflow-hidden">
-        <div className="sponsor-marquee flex w-max gap-3">
-          {[...items, ...items].map((sponsor, index) => (
-            <div
-              key={`${sponsor}-${index}`}
-              className={`flex min-w-40 items-center justify-center rounded-xl border bg-black/25 px-5 py-4 text-center font-black uppercase tracking-wide ${
-                emphasis
-                  ? "border-[#D8B45A]/40 text-[#F1D58A]"
-                  : "border-white/10 text-white"
-              }`}
-            >
-              {sponsor}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
 
