@@ -4,1034 +4,470 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowRight,
   Award,
   BarChart3,
   CalendarDays,
+  Camera,
+  CheckCircle2,
   ChevronRight,
   CirclePlay,
+  Clock3,
+  Mail,
+  MapPin,
   Medal,
-  Shield,
+  MessageCircle,
+  Phone,
+  Radio,
   Sparkles,
   Star,
+  Target,
   Trophy,
-  Users,
+  Zap,
 } from "lucide-react";
 
-import FeaturedSponsorCarousel from "@/components/sponsors/FeaturedSponsorCarousel";
-import SponsorGrid from "@/components/sponsors/SponsorGrid";
 import { getSettings } from "@/services/SettingServices";
+import { getAboutSettings, subscribeToOrganizationCollection } from "@/services/organizationService";
 import { subscribeToMatches } from "@/services/matchService";
 import { getPlayerStats } from "@/services/playerStatsService";
 import { subscribeToTeams } from "@/services/teamService";
-import {
-  getTopBatters,
-  getTopBowlers,
-} from "@/utils/leaderboardUtils";
-import {
-  rankTeams,
-  sortRecentMatches,
-  sortUpcomingMatches,
-} from "@/utils/tournamentUtils";
-import {
-  getAwards,
-  getMatchAnalytics,
-  getTournamentStats,
-} from "@/utils/tournamentAnalyticsUtils";
+import { getTopBatters, getTopBowlers } from "@/utils/leaderboardUtils";
+import { rankTeams, sortRecentMatches, sortUpcomingMatches } from "@/utils/tournamentUtils";
 
 const liveStatuses = ["live", "paused", "innings_break"];
 
-const quickLinks = [
-  { label: "Teams", href: "/teams", icon: Shield },
-  { label: "Players", href: "/players", icon: Users },
-  { label: "Leaderboards", href: "/leaderboards", icon: Trophy },
-  { label: "Awards", href: "/awards", icon: Medal },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Statistics", href: "/stats", icon: Star },
+const capabilityCards = [
+  {
+    icon: Trophy,
+    title: "Tournament Management",
+    text: "Well-planned competitions, transparent scheduling and a professional match-day experience for every team.",
+  },
+  {
+    icon: Radio,
+    title: "Live Scoring",
+    text: "Ball-by-ball updates keep players, families and supporters connected to the action from anywhere.",
+  },
+  {
+    icon: BarChart3,
+    title: "Player Statistics",
+    text: "Reliable performance records help local talent build a sporting profile that lasts beyond one tournament.",
+  },
+  {
+    icon: Camera,
+    title: "Broadcast Support",
+    text: "Stream-ready score graphics and match coverage give community cricket a bigger, more polished stage.",
+  },
 ];
 
-function getResultText(match) {
-  if (!match?.result) return match?.status === "abandoned" ? "No Result" : "Completed";
-  if (typeof match.result === "string") return match.result;
-  return match.result.result || "Completed";
+function textResult(match) {
+  if (typeof match?.result === "string") return match.result;
+  return match?.result?.result || (match?.status === "abandoned" ? "No result" : "Match completed");
 }
 
-function getScoreLine(match) {
-  return `${match.score ?? match.currentScore ?? 0}/${match.wickets ?? 0}`;
+function formatSchedule(match) {
+  return [match?.date, match?.time].filter(Boolean).join(" · ") || "Schedule to be announced";
 }
 
-function getOversLine(match) {
-  return match.overs || match.currentOvers || "0.0";
+function playerName(player) {
+  return player?.playerName || player?.name || "";
 }
 
-function formatDateTime(match) {
-  return [match.date, match.time].filter(Boolean).join(" | ") || "Schedule TBA";
+function parseList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value !== "string") return [];
+  return value.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean);
 }
 
-function formatNrr(value) {
-  return Number(value || 0).toFixed(3);
-}
-
-function getTournamentStatus(liveCount, upcomingCount, completedCount) {
-  if (liveCount > 0) return "Live Now";
-  if (upcomingCount > 0) return "In Progress";
-  if (completedCount > 0) return "Completed";
-  return "Setup";
-}
-
-function getTournamentStage(settings, matches) {
-  if (settings?.tournamentStage) return settings.tournamentStage;
-
-  const completed = matches.filter(
-    (match) => match.status === "completed" || match.status === "abandoned"
-  ).length;
-  const remaining = matches.length - completed;
-
-  if (remaining === 1 && matches.length > 1) return "Final";
-  if (remaining <= 2 && matches.length > 3) return "Semi Final";
-  return "League Stage";
-}
-
-function formatStageLabel(stage) {
-  if (!stage) return "LEAGUE STAGE";
-  if (stage === "Semi Final") return "SEMI FINAL STAGE";
-  if (stage === "League Stage") return "LEAGUE STAGE";
-  if (stage === "Final") return "FINAL";
-  return String(stage).toUpperCase();
-}
-
-function getRequiredLine(match) {
-  const target = match.revisedTarget || match.target;
-  const score = match.score ?? match.currentScore ?? 0;
-  const wickets = match.wickets ?? 0;
-  const ballsUsed = match.totalBalls || 0;
-  const oversLimit = match.revisedOvers || match.oversLimit || 0;
-  const ballsLimit = oversLimit ? Number(oversLimit) * 6 : 0;
-
-  if (!target || !ballsLimit || wickets >= 10) {
-    return {
-      runs: "-",
-      balls: "-",
-      label: "Target not set",
-    };
-  }
-
-  return {
-    runs: Math.max(target - score, 0),
-    balls: Math.max(ballsLimit - ballsUsed, 0),
-    label: `Need ${Math.max(target - score, 0)} from ${Math.max(
-      ballsLimit - ballsUsed,
-      0
-    )}`,
-  };
-}
-
-function getMatchPriority(match) {
-  if (match.featured) return 1;
-
-  const stage = String(match.matchStage || "").toLowerCase();
-  if (stage.includes("final") && !stage.includes("semi") && !stage.includes("quarter")) return 2;
-  if (stage.includes("semi")) return 3;
-  if (stage.includes("quarter")) return 4;
-  return 5;
-}
-
-function sortLiveMatches(matches) {
-  return [...matches].sort((a, b) => getMatchPriority(a) - getMatchPriority(b));
-}
-
-function getBestStrikeRate(players) {
-  return [...players]
-    .filter((player) => (player.runs || 0) > 0 && (player.ballsFaced || 0) > 0)
-    .sort((a, b) => {
-      if ((b.strikeRate || 0) !== (a.strikeRate || 0)) {
-        return (b.strikeRate || 0) - (a.strikeRate || 0);
-      }
-
-      return (b.runs || 0) - (a.runs || 0);
-    })[0];
+function asUrl(value, fallback = "#") {
+  return value && String(value).trim() ? String(value).trim() : fallback;
 }
 
 export default function TournamentPortal({ sponsors }) {
-  const sponsorItems = sponsors || [];
   const [matches, setMatches] = useState([]);
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [settings, setSettings] = useState(null);
+  const [aboutSettings, setAboutSettings] = useState(null);
+  const [seasons, setSeasons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeMatches = subscribeToMatches((data) => {
+    const stopMatches = subscribeToMatches((data) => {
       setMatches(data);
       setLoading(false);
-    });
-    const unsubscribeTeams = subscribeToTeams((data) => {
-      setTeams(data);
-    });
+    }, () => setLoading(false));
+    const stopTeams = subscribeToTeams(setTeams, () => setTeams([]));
+    const stopSeasons = subscribeToOrganizationCollection("seasons", setSeasons, () => setSeasons([]));
 
     getPlayerStats().then(setPlayers).catch(() => setPlayers([]));
     getSettings().then(setSettings).catch(() => setSettings(null));
+    getAboutSettings().then(setAboutSettings).catch(() => setAboutSettings(null));
 
     return () => {
-      unsubscribeMatches();
-      unsubscribeTeams();
+      stopMatches();
+      stopTeams();
+      stopSeasons();
     };
   }, []);
 
   const liveMatches = useMemo(
-    () => sortLiveMatches(matches.filter((match) => liveStatuses.includes(match.status))),
+    () => matches.filter((match) => liveStatuses.includes(match.status)),
     [matches]
   );
-  const upcomingMatches = useMemo(
-    () =>
-      sortUpcomingMatches(
-        matches.filter((match) => match.status === "scheduled")
-      ).slice(0, 4),
+  const fixtures = useMemo(
+    () => sortUpcomingMatches(matches.filter((match) => match.status === "scheduled")).slice(0, 4),
     [matches]
   );
-  const recentResults = useMemo(
-    () =>
-      sortRecentMatches(
-        matches.filter(
-          (match) => match.status === "completed" || match.status === "abandoned"
-        )
-      ).slice(0, 3),
+  const results = useMemo(
+    () => sortRecentMatches(matches.filter((match) => ["completed", "abandoned"].includes(match.status))).slice(0, 3),
     [matches]
   );
-  const primaryLiveMatch = liveMatches[0];
-  const secondaryLiveMatches = liveMatches.slice(1);
-  const rankedTeams = useMemo(() => rankTeams(teams), [teams]);
+  const standings = useMemo(() => rankTeams(teams).slice(0, 5), [teams]);
   const topBatter = useMemo(() => getTopBatters(players)[0], [players]);
   const topBowler = useMemo(() => getTopBowlers(players)[0], [players]);
-  const bestStrikeRate = useMemo(() => getBestStrikeRate(players), [players]);
-  const awards = useMemo(() => getAwards(players, matches), [players, matches]);
-  const tournamentStats = useMemo(
-    () => getTournamentStats(matches, players),
-    [matches, players]
+  const mostSixes = useMemo(() => [...players].sort((a, b) => (b.sixes || 0) - (a.sixes || 0))[0], [players]);
+  const mostFours = useMemo(() => [...players].sort((a, b) => (b.fours || 0) - (a.fours || 0))[0], [players]);
+  const playerOfTournament = settings?.playerOfTournament || settings?.pastPlayerOfTournament || "";
+  const galleryImages = parseList(settings?.galleryImages);
+  const testimonials = Array.isArray(settings?.testimonials) ? settings.testimonials : [];
+  const hasLeaders = Boolean(topBatter || topBowler || playerOfTournament || mostSixes?.sixes || mostFours?.fours);
+  const hasHighlights = Boolean(
+    settings?.pastChampion || settings?.pastRunnerUp || settings?.pastBestBatter ||
+    settings?.pastBestBowler || settings?.pastPlayerOfTournament
   );
-  const matchAnalytics = useMemo(() => getMatchAnalytics(matches), [matches]);
 
-  const completedCount = matches.filter(
-    (match) => match.status === "completed" || match.status === "abandoned"
-  ).length;
-  const remainingCount = Math.max(matches.length - completedCount, 0);
-  const tournamentName =
-    settings?.tournamentName || settings?.name || "Viva Sports Championship";
-  const tournamentStage = getTournamentStage(settings, matches);
-  const tournamentStatus = getTournamentStatus(
-    liveMatches.length,
-    upcomingMatches.length,
-    completedCount
-  );
+  const tournamentsCount = seasons.length || aboutSettings?.tournamentsConducted || settings?.tournamentsConducted || "—";
+  const teamsCount = teams.length || aboutSettings?.teamsParticipated || settings?.teamsParticipated || "—";
+  const playersCount = players.length || aboutSettings?.playersRegistered || settings?.playersRegistered || "—";
+  const matchesCount = matches.length || aboutSettings?.matchesHosted || "—";
 
   return (
-    <div className="bg-[radial-gradient(circle_at_top,#18233B_0%,#050914_45%,#020611_100%)] text-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-4 sm:gap-10 sm:px-6 sm:py-6 lg:px-8">
-        <HeroSection
-          tournamentName={tournamentName}
-          tournamentStage={tournamentStage}
-          tournamentStatus={tournamentStatus}
-          completedCount={completedCount}
-          remainingCount={remainingCount}
-          teamsCount={teams.length}
-          liveCount={liveMatches.length}
-        />
+    <div className="viva-home">
+      <Hero settings={settings} />
 
-        <SponsorsSection sponsors={sponsorItems} />
-
-        <section className="space-y-4">
-          <SectionHeader
-            icon={CirclePlay}
-            title="Live Match Center"
-            subtitle="Score, stream and match situation"
-            href="/live"
-            action="Live Centre"
+      <section id="about" className="viva-section viva-about">
+        <div className="viva-container">
+          <SectionHeading
+            eyebrow="Who we are"
+            title="Building a stronger sporting community"
+            copy="Viva Sports brings players, teams and supporters together through well-run competitions, modern technology and a genuine respect for the game."
           />
-          {loading ? (
-            <SkeletonGrid />
-          ) : primaryLiveMatch ? (
-            <div className="space-y-4">
-              <LiveMatchCard
-                match={primaryLiveMatch}
-                tournamentName={primaryLiveMatch.tournamentName || tournamentName}
-                tournamentYear={primaryLiveMatch.tournamentYear}
-              />
-              {secondaryLiveMatches.length > 0 && (
-                <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-                  <div className="flex snap-x gap-4">
-                    {secondaryLiveMatches.map((match) => (
-                      <div key={match.id} className="w-[86vw] shrink-0 snap-start sm:w-[26rem]">
-                        <CompactLiveMatchCard match={match} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <RecentResultHero match={recentResults[0]} />
-          )}
-        </section>
-
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <section className="space-y-5">
-            <SectionHeader
-              icon={CalendarDays}
-              title="Upcoming Matches"
-              subtitle="Next fixtures on the tournament calendar"
-              href="/fixtures"
-              action="All Fixtures"
-            />
-            {upcomingMatches.length ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {upcomingMatches.map((match) => (
-                  <UpcomingCard key={match.id} match={match} />
-                ))}
+          <div className="mt-10 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <article className="viva-story-card">
+              <span className="viva-icon"><Target /></span>
+              <div>
+                <p className="viva-kicker">Our mission</p>
+                <h3>Create opportunity. Reward talent. Raise standards.</h3>
+                <p>We give local cricketers a credible platform to compete, improve and be recognized—supported by fair organization and reliable match data.</p>
               </div>
-            ) : (
-              <EmptyCard
-                title="No fixtures scheduled"
-                body="Upcoming matches will appear once the schedule is published."
-              />
-            )}
-          </section>
-
-          <section className="space-y-5">
-            <SectionHeader
-              icon={Award}
-              title="Recent Results"
-              subtitle="Latest completed matches"
-              href="/results"
-              action="All Results"
-            />
-            {recentResults.length ? (
-              <div className="grid gap-4">
-                {recentResults.map((match) => (
-                  <ResultCard key={match.id} match={match} />
-                ))}
+            </article>
+            <article className="viva-story-card">
+              <span className="viva-icon"><Sparkles /></span>
+              <div>
+                <p className="viva-kicker">Our vision</p>
+                <h3>Community sport with a professional future.</h3>
+                <p>We want every promising player to feel seen and every tournament to feel worthy of the talent taking part.</p>
               </div>
-            ) : (
-              <EmptyCard
-                title="No completed matches yet"
-                body="Final scores and player awards will appear here."
-              />
-            )}
-          </section>
+            </article>
+          </div>
+          <div className="viva-stat-grid">
+            <Stat value={tournamentsCount} label="Tournament seasons" />
+            <Stat value={teamsCount} label="Teams participated" />
+            <Stat value={playersCount} label="Players registered" />
+            <Stat value={matchesCount} label="Matches hosted" />
+          </div>
         </div>
+      </section>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-          <section className="space-y-5">
-            <SectionHeader
-              icon={BarChart3}
-              title="Points Table Preview"
-              subtitle="Top five teams in the race"
-              href="/pointstable"
-              action="View Full Table"
-            />
-            <PointsPreview teams={rankedTeams.slice(0, 5)} />
-          </section>
-
-          <section className="hidden space-y-5 md:block">
-            <SectionHeader
-              icon={Trophy}
-              title="Top Performers"
-              subtitle="Players shaping the tournament"
-              href="/leaderboards"
-              action="Leaderboards"
-            />
-            <PerformersPanel
-              topBatter={topBatter}
-              topBowler={topBowler}
-              bestStrikeRate={bestStrikeRate}
-              mostPom={awards.mostPlayerOfMatchAwards}
-            />
-          </section>
-        </div>
-
-        <SnapshotSection
-          teams={teams.length}
-          matches={matches.length}
-          completed={completedCount}
-          live={liveMatches.length}
-          upcoming={upcomingMatches.length}
-        />
-
-        <SeoOverviewSection />
-
-        <section className="hidden space-y-5 md:block">
-          <SectionHeader
-            icon={Medal}
-            title="Tournament Records"
-            subtitle="Headline achievements from completed matches"
-            href="/stats"
-            action="Statistics"
-          />
-          <RecordsPanel
-            stats={tournamentStats}
-            highestPartnership={matchAnalytics.highestPartnerships?.[0]}
-          />
-        </section>
-
-        <section className="hidden space-y-5 pb-6 md:block">
-          <SectionHeader
-            icon={Sparkles}
-            title="Quick Access"
-            subtitle="Explore every public tournament section"
-          />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {quickLinks.map(({ label, href, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="group flex items-center justify-between rounded-xl border border-[#D8B45A]/15 bg-[#07101F] p-5 transition hover:border-[#D8B45A]/50 hover:bg-[#0D172A]"
-              >
-                <span className="flex items-center gap-3 font-bold">
-                  <Icon className="h-5 w-5 text-[#D8B45A]" />
-                  {label}
-                </span>
-                <ChevronRight className="h-5 w-5 text-slate-300 transition group-hover:text-[#F1D58A]" />
-              </Link>
+      <section className="viva-section viva-cream">
+        <div className="viva-container">
+          <SectionHeading eyebrow="What we do" title="A complete platform for better cricket" copy="From the first fixture to the final presentation, Viva Sports gives every competition structure, visibility and momentum." dark />
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {capabilityCards.map(({ icon: Icon, title, text }, index) => (
+              <article key={title} className="viva-capability-card">
+                <span className="viva-card-number">0{index + 1}</span>
+                <span className="viva-capability-icon"><Icon /></span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
             ))}
           </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function HeroSection({
-  tournamentName,
-  tournamentStage,
-  tournamentStatus,
-  completedCount,
-  remainingCount,
-  teamsCount,
-  liveCount,
-}) {
-  const stageLabel = formatStageLabel(tournamentStage);
-
-  return (
-    <section className="relative overflow-hidden rounded-2xl border border-[#D8B45A]/25 bg-[#050914] p-5 shadow-2xl shadow-black/40 sm:p-8 lg:p-10">
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(216,180,90,0.16),transparent_35%,rgba(255,255,255,0.04))]" />
-      <div className="absolute right-0 top-0 h-full w-2/5 bg-[radial-gradient(circle_at_center,rgba(216,180,90,0.18),transparent_60%)]" />
-
-      <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="relative h-16 w-16 overflow-hidden rounded-full border border-[#D8B45A]/50 bg-black shadow-xl">
-              <Image
-                src="/logo.jpeg"
-                alt="Viva Sports"
-                fill
-                sizes="64px"
-                className="object-cover"
-                priority
-              />
-            </span>
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-[#D8B45A]">
-                VIVA SPORTS
-              </p>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-300">
-                {stageLabel}
-              </p>
-            </div>
-          </div>
-
-          <h1 className="mt-7 max-w-4xl text-4xl font-black leading-tight text-white sm:text-6xl">
-            {tournamentName}
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-            Competition, prestige and live cricket coverage in one professional
-            match centre.
-          </p>
-
-          <div className="mt-7 flex flex-wrap gap-3">
-            <HeroBadge label="Stage" value={stageLabel} />
-            <HeroBadge label="Status" value={tournamentStatus} />
-          </div>
         </div>
+      </section>
 
-        <div className="rounded-2xl border border-[#D8B45A]/20 bg-black/35 p-5">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D8B45A]">
-                Tournament Pulse
-              </p>
-              <h2 className="mt-2 text-2xl font-black">Road To Glory</h2>
-            </div>
-            <Trophy className="h-10 w-10 text-[#D8B45A]" />
-          </div>
-
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <HeroMetric label="Matches Completed" value={completedCount} />
-            <HeroMetric label="Matches Remaining" value={remainingCount} />
-            <HeroMetric label="Teams Participating" value={teamsCount} />
-            <HeroMetric label="Live Matches" value={liveCount} />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HeroBadge({ label, value }) {
-  return (
-    <span className="rounded-full border border-[#D8B45A]/30 bg-[#D8B45A]/10 px-4 py-2 text-sm font-bold text-[#F1D58A]">
-      {label}: {value}
-    </span>
-  );
-}
-
-function HeroMetric({ label, value }) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4 text-center">
-      <p className="text-3xl font-black text-white">{value}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-wider text-slate-400">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-function SectionHeader({ icon: Icon, title, subtitle, href, action }) {
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex items-start gap-3">
-        <span className="rounded-xl border border-[#D8B45A]/20 bg-[#D8B45A]/10 p-2 text-[#D8B45A]">
-          <Icon className="h-5 w-5" />
-        </span>
-        <div>
-          <h2 className="text-2xl font-black sm:text-3xl">{title}</h2>
-          <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
-        </div>
-      </div>
-      {href && action && (
-        <Link
-          href={href}
-          className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#D8B45A]/20 bg-[#07101F] px-4 py-2 text-sm font-bold text-[#F1D58A]"
-        >
-          {action}
-          <ChevronRight className="h-4 w-4" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function LiveMatchCard({ match, tournamentName, tournamentYear }) {
-  const requirement = getRequiredLine(match);
-  const stage = match.matchStage || "League Match";
-  const rrr =
-    match.target && requirement.balls !== "-"
-      ? ((Number(requirement.runs) / Math.max(Number(requirement.balls), 1)) * 6).toFixed(2)
-      : "-";
-
-  return (
-    <article className="overflow-hidden rounded-2xl border border-[#D8B45A]/25 bg-[#07101F] shadow-2xl shadow-black/30">
-      <div className="border-b border-white/10 bg-black/25 px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[var(--emerald)] px-3 py-1 text-xs font-black uppercase text-white">
-              Live
-            </span>
-            {match.featured && (
-              <span className="rounded-full bg-[#D8B45A] px-3 py-1 text-xs font-black uppercase text-[#050914]">
-                Featured
-              </span>
+      <section id="live" className="viva-section viva-data-section">
+        <div className="viva-container">
+          <SectionHeading eyebrow="Match centre" title="Live cricket, as it happens" copy="Follow the score, match situation and every important moment in real time." action="View live centre" href="/live" />
+          <div className="mt-10">
+            {loading ? <LoadingCard /> : liveMatches.length ? (
+              <div className="grid gap-5 lg:grid-cols-2">
+                {liveMatches.slice(0, 4).map((match) => <LiveCard key={match.id} match={match} />)}
+              </div>
+            ) : (
+              <ProfessionalEmpty icon={Clock3} title="No live matches currently in progress." text="The next contest is never far away. Explore the fixture list and plan your match day." href="/fixtures" action="View fixtures" />
             )}
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-300 sm:text-sm">
-            {match.ground || "Ground TBA"}
-          </span>
         </div>
-        <p className="mt-3 text-xs font-black uppercase tracking-[0.2em] text-[#D8B45A]">
-          {[tournamentName || match.tournamentName, tournamentYear || match.tournamentYear, stage]
-            .filter(Boolean)
-            .join(" | ")}
-        </p>
-      </div>
+      </section>
 
-      <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:p-7">
-        <TeamScore
-          team={match.battingTeam || match.teamA}
-          score={getScoreLine(match)}
-          overs={getOversLine(match)}
-          highlight
-        />
-        <div className="text-center text-sm font-black uppercase tracking-[0.22em] text-[#D8B45A]">
-          VS
+      <section className="viva-section viva-cream">
+        <div className="viva-container">
+          <SectionHeading eyebrow="On the calendar" title="Upcoming fixtures" copy="The next matches from the current Viva Sports competition calendar." action="View all fixtures" href="/fixtures" dark />
+          <div className="mt-10">
+            {fixtures.length ? (
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                {fixtures.map((match) => <FixtureCard key={match.id} match={match} />)}
+              </div>
+            ) : (
+              <ProfessionalEmpty icon={CalendarDays} title="The next fixtures are being prepared" text="Team line-ups, venues and start times will appear here as soon as the schedule is confirmed." href="/fixtures" action="Explore fixtures" light />
+            )}
+          </div>
         </div>
-        <TeamScore
-          team={
-            match.battingTeam === match.teamA
-              ? match.teamB
-              : match.teamA || match.teamB
-          }
-          score={match.firstInningsScore ? `${match.firstInningsScore}` : "-"}
-          overs={match.firstInningsOvers || match.oversLimit || "-"}
-        />
-      </div>
+      </section>
 
-      <div className="grid gap-3 border-t border-white/10 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center lg:px-7">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <MiniStat label="Target" value={match.target || "-"} />
-          <MiniStat label="Need" value={requirement.runs} />
-          <MiniStat label="RRR" value={rrr} />
+      <section className="viva-section viva-data-section">
+        <div className="viva-container">
+          <SectionHeading eyebrow="Latest action" title="Recent results" copy="Final outcomes from the latest completed Viva Sports matches." action="View all results" href="/results" />
+          <div className="mt-10">
+            {results.length ? (
+              <div className="grid gap-5 lg:grid-cols-3">
+                {results.map((match) => <ResultCard key={match.id} match={match} />)}
+              </div>
+            ) : (
+              <ProfessionalEmpty icon={Award} title="Results will take shape when the action begins" text="Completed matches will be published here with the winner, margin and match date." href="/fixtures" action="See what’s ahead" />
+            )}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/live/${match.id}`}
-            className="min-h-11 rounded-xl bg-[#D8B45A] px-4 py-2 text-sm font-black uppercase text-[#050914]"
-          >
-            Watch Live
-          </Link>
-          <Link
-            href={`/scorecard/${match.id}`}
-            className="min-h-11 rounded-xl border border-white/10 px-4 py-2 text-sm font-black uppercase text-white"
-          >
-            Scorecard
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
+      </section>
 
-function TeamScore({ team, score, overs, highlight = false }) {
-  return (
-    <div className={highlight ? "text-left lg:text-right" : "text-left"}>
-      <p className="text-xl font-black uppercase text-white sm:text-3xl">
-        {team || "Team TBA"}
-      </p>
-      <p className="mt-2 text-5xl font-black text-white sm:text-6xl">{score}</p>
-      <p className="mt-1 text-sm font-bold uppercase tracking-wider text-slate-400">
-        {overs} overs
-      </p>
+      {standings.length > 0 && (
+        <section className="viva-section viva-cream">
+          <div className="viva-container">
+            <SectionHeading eyebrow="Tournament race" title="Standings preview" copy="The leading five teams based on points and net run rate." action="View full points table" href="/pointstable" dark />
+            <Standings teams={standings} />
+          </div>
+        </section>
+      )}
+
+      {hasLeaders && (
+        <section className="viva-section viva-leaders">
+          <div className="viva-container">
+            <SectionHeading eyebrow="Tournament leaders" title="The names setting the standard" copy="Recognizing the players making the biggest impact on this competition." action="All leaderboards" href="/leaderboards" />
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <Leader icon={Target} label="Top batter" name={playerName(topBatter)} value={topBatter ? `${topBatter.runs || 0} runs` : ""} />
+              <Leader icon={Zap} label="Top bowler" name={playerName(topBowler)} value={topBowler ? `${topBowler.wickets || 0} wickets` : ""} />
+              <Leader icon={Trophy} label="Player of tournament" name={playerOfTournament} value="Outstanding impact" />
+              <Leader icon={Sparkles} label="Most sixes" name={playerName(mostSixes)} value={mostSixes?.sixes ? `${mostSixes.sixes} sixes` : ""} />
+              <Leader icon={Award} label="Most fours" name={playerName(mostFours)} value={mostFours?.fours ? `${mostFours.fours} fours` : ""} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {hasHighlights && <Highlights settings={settings} />}
+      {galleryImages.length > 0 && <Gallery images={galleryImages.slice(0, 8)} />}
+      {sponsors?.length > 0 && <Sponsors sponsors={sponsors} />}
+      {testimonials.length > 0 && <Testimonials items={testimonials} />}
+      <Contact settings={settings} />
     </div>
   );
 }
 
-function MiniStat({ label, value }) {
+function Hero({ settings }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20 p-2.5 sm:p-3">
-      <p className="text-xs font-bold uppercase tracking-wider text-slate-300">
-        {label}
-      </p>
-      <p className="mt-1 text-lg font-black text-white sm:text-xl">{value}</p>
+    <section className="viva-hero">
+      <Image src="/viva-cricket-hero.png" alt="Cricketer playing an attacking shot under stadium lights" fill priority sizes="100vw" className="object-cover object-[66%_center]" />
+      <div className="viva-hero-shade" />
+      <div className="viva-container viva-hero-content">
+        <div className="viva-hero-copy">
+          <p className="viva-hero-eyebrow"><span /> The home of community cricket</p>
+          <h1>Viva<br /><em>Sports</em></h1>
+          <h2>Promoting sportsmanship, talent & competitive excellence</h2>
+          <p>Supporting local cricket and community sports through professionally organized tournaments and modern technology.</p>
+          <div className="viva-hero-actions">
+            <Link href="/live" className="viva-button viva-button-gold"><CirclePlay /> View live matches</Link>
+            <Link href="/fixtures" className="viva-button viva-button-ghost">Upcoming tournaments</Link>
+            <Link href={asUrl(settings?.teamRegistrationUrl, "/contact")} className="viva-button viva-button-ghost">Register team</Link>
+            <Link href="#contact" className="viva-button viva-button-text">Contact us <ArrowRight /></Link>
+          </div>
+        </div>
+        <div className="viva-hero-mark" aria-hidden="true"><span>VS</span><small>EST. {settings?.establishedYear || "2021"}</small></div>
+      </div>
+      <a href="#about" className="viva-scroll-cue" aria-label="Scroll to learn about Viva Sports"><span /> Discover Viva Sports</a>
+    </section>
+  );
+}
+
+function SectionHeading({ eyebrow, title, copy, action, href, dark = false }) {
+  return (
+    <div className={`viva-heading ${dark ? "viva-heading-dark" : ""}`}>
+      <div>
+        <p className="viva-kicker">{eyebrow}</p>
+        <h2>{title}</h2>
+        {copy && <p className="viva-heading-copy">{copy}</p>}
+      </div>
+      {action && href && <Link href={href} className="viva-section-link">{action}<ChevronRight /></Link>}
     </div>
   );
 }
 
-function CompactLiveMatchCard({ match }) {
-  return (
-    <Link
-      href={`/live/${match.id}`}
-      className="block rounded-xl border border-[#D8B45A]/20 bg-[#07101F] p-4"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-[var(--emerald)] px-3 py-1 text-xs font-black uppercase text-white">
-          {match.matchStage || "Live"}
-        </span>
-        <span className="text-sm font-bold text-[#F1D58A]">
-          {getScoreLine(match)} ({getOversLine(match)})
-        </span>
-      </div>
-      <h3 className="mt-3 text-lg font-black text-white">
-        {match.teamA} vs {match.teamB}
-      </h3>
-      <p className="mt-2 text-sm text-slate-300">{match.ground || "Ground TBA"}</p>
-    </Link>
-  );
+function Stat({ value, label }) {
+  return <article className="viva-stat"><strong>{value}</strong><span>{label}</span></article>;
 }
 
-function RecentResultHero({ match }) {
-  if (!match) {
-    return (
-      <EmptyCard
-        title="No live matches"
-        body="Live action and recent results will appear here as soon as matches begin."
-      />
-    );
-  }
-
+function LiveCard({ match }) {
+  const score = `${match.score ?? match.currentScore ?? 0}/${match.wickets ?? 0}`;
   return (
-    <article className="rounded-2xl border border-[#D8B45A]/20 bg-[#07101F] p-5 shadow-2xl shadow-black/30">
-      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#D8B45A]">
-        Most Recent Result
-      </p>
-      <h2 className="mt-3 text-2xl font-black text-white">
-        {match.winner || "No Result"}
-      </h2>
-      <p className="mt-2 text-lg font-bold text-[var(--vs-success)]">
-        {getResultText(match)}
-      </p>
-      <p className="mt-3 text-slate-300">
-        {match.teamA} vs {match.teamB}
-      </p>
-      <div className="mt-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
-        <p>{match.teamA}: {match.firstInningsScore ?? "-"}/{match.firstInningsWickets ?? "-"}</p>
-        <p>{match.teamB}: {match.secondInningsScore ?? "-"}/{match.secondInningsWickets ?? "-"}</p>
-      </div>
-      <Link
-        href={`/scorecard/${match.id}`}
-        className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[#D8B45A] px-4 py-2 text-sm font-black uppercase text-[#050914]"
-      >
-        View Scorecard
-      </Link>
+    <article className="viva-live-card">
+      <div className="viva-live-top"><span className="viva-live-pill"><i /> Live</span><span>{match.ground || "Venue TBA"}</span></div>
+      <div className="viva-versus"><div><small>Batting</small><h3>{match.battingTeam || match.teamA}</h3></div><strong>{score}<small>{match.overs || match.currentOvers || "0.0"} ov</small></strong></div>
+      <div className="viva-match-opponent"><span>vs</span><b>{match.bowlingTeam || match.teamB}</b><em>{match.matchStage || "League match"}</em></div>
+      <Link href={`/live/${match.id}`} className="viva-card-link">Open live match <ArrowRight /></Link>
     </article>
   );
 }
 
-function SnapshotSection({ teams, matches, completed, live, upcoming }) {
-  const cards = [
-    ["Teams", teams],
-    ["Matches", matches],
-    ["Completed", completed],
-    ["Live", live],
-    ["Upcoming", upcoming],
-  ];
-
+function FixtureCard({ match }) {
   return (
-    <section className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-5">
-      {cards.map(([label, value]) => (
-        <div
-          key={label}
-          className="rounded-xl border border-[#D8B45A]/15 bg-[#07101F] p-5"
-        >
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D8B45A]">
-            {label}
-          </p>
-          <p className="mt-3 text-4xl font-black">{value}</p>
-        </div>
-      ))}
-    </section>
-  );
-}
-
-function SeoOverviewSection() {
-  const highlights = [
-    {
-      title: "Live Cricket Scores",
-      body: "Follow ball-by-ball cricket live scores, match status, required runs, overs and scorecards from the Viva Sports live match centre.",
-    },
-    {
-      title: "Cricket Tournament Management",
-      body: "Manage tournament fixtures, teams, players, results, standings and match reports from one professional cricket tournament platform.",
-    },
-    {
-      title: "Fixtures",
-      body: "Browse upcoming cricket fixtures with team matchups, venues, dates and schedule updates for every Viva Sports tournament.",
-    },
-    {
-      title: "Results",
-      body: "Track completed match results, winners, score summaries and player of the match highlights as soon as games finish.",
-    },
-    {
-      title: "Points Table",
-      body: "View the cricket points table with played matches, points, net run rate and team rankings updated throughout the competition.",
-    },
-    {
-      title: "Live Streaming",
-      body: "Connect cricket live streaming and broadcast overlays with match scoring so fans can watch and follow the tournament in real time.",
-    },
-  ];
-
-  return (
-    <section className="hidden rounded-2xl border border-[#D8B45A]/15 bg-[#07101F] p-5 sm:p-7 md:block">
-      <div className="max-w-3xl">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#D8B45A]">
-          Viva Sports India
-        </p>
-        <h2 className="mt-3 text-3xl font-black text-white">
-          Cricket live scores, fixtures, results and tournament operations
-        </h2>
-        <p className="mt-4 leading-7 text-slate-300">
-          Viva Sports brings cricket tournament management, live scoring,
-          points tables, player statistics, match administration and streaming
-          tools together for organizers, scorers, teams and fans.
-        </p>
-      </div>
-
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {highlights.map((item) => (
-          <article
-            key={item.title}
-            className="rounded-xl border border-white/10 bg-black/20 p-4"
-          >
-            <h2 className="text-xl font-black text-white">{item.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-400">{item.body}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function UpcomingCard({ match }) {
-  return (
-    <article className="rounded-xl border border-white/10 bg-[#07101F] p-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-[#D8B45A]">
-        Upcoming Fixture
-      </p>
-      <h3 className="mt-3 text-lg font-black">
-        {match.teamA} vs {match.teamB}
-      </h3>
-      <p className="mt-3 text-sm text-slate-300">{formatDateTime(match)}</p>
-      <p className="mt-1 text-sm text-slate-400">{match.ground || "Ground TBA"}</p>
+    <article className="viva-fixture-card">
+      <div className="viva-fixture-meta"><CalendarDays /><span>{formatSchedule(match)}</span></div>
+      <p>{match.matchStage || "Upcoming match"}</p>
+      <h3>{match.teamA}</h3><span className="viva-vs">VS</span><h3>{match.teamB}</h3>
+      <div className="viva-venue"><MapPin />{match.ground || "Venue to be announced"}</div>
+      <Link href={`/live/${match.id}`}>Match details <ArrowRight /></Link>
     </article>
   );
 }
 
 function ResultCard({ match }) {
-  const playerOfMatch =
-    match.playerOfMatch?.playerName || match.playerOfMatch?.name || "To be confirmed";
-
   return (
-    <article className="rounded-xl border border-white/10 bg-[#07101F] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-black">{match.teamA} vs {match.teamB}</h3>
-        <Link
-          href={`/scorecard/${match.id}`}
-          className="text-sm font-bold text-[#F1D58A]"
-        >
-          Scorecard
-        </Link>
-      </div>
-      <p className="mt-3 text-sm font-bold text-emerald-200">
-        Winner: {match.winner || "No Result"}
-      </p>
-      <p className="mt-1 text-sm text-slate-300">{getResultText(match)}</p>
-      <p className="mt-2 text-sm text-[#F1D58A]">
-        Player Of Match: {playerOfMatch}
-      </p>
+    <article className="viva-result-card">
+      <div className="viva-result-date"><CheckCircle2 /> Final <span>{match.date || "Date TBA"}</span></div>
+      <p>{match.teamA} <span>vs</span> {match.teamB}</p>
+      <h3>{match.winner || "Result confirmed"}</h3>
+      <strong>{textResult(match)}</strong>
+      <Link href={`/scorecard/${match.id}`}>View scorecard <ArrowRight /></Link>
     </article>
   );
 }
 
-function PointsPreview({ teams }) {
-  if (!teams.length) {
-    return (
-      <EmptyCard
-        title="No standings available"
-        body="The points table will appear once teams are added."
-      />
-    );
-  }
-
+function Standings({ teams }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#D8B45A]/15 bg-[#07101F]">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] text-sm">
-          <thead className="border-b border-white/10 text-slate-400">
-            <tr>
-              <th className="px-4 py-3 text-left">Position</th>
-              <th className="px-4 py-3 text-left">Team</th>
-              <th className="px-4 py-3 text-center">Played</th>
-              <th className="px-4 py-3 text-center">Points</th>
-              <th className="px-4 py-3 text-center">NRR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {teams.map((team, index) => (
-              <tr key={team.id || team.name} className="border-b border-white/5">
-                <td className="px-4 py-3 font-bold">{index + 1}</td>
-                <td className="px-4 py-3 font-bold">{team.name}</td>
-                <td className="px-4 py-3 text-center">{team.played || 0}</td>
-                <td className="px-4 py-3 text-center font-black text-[#F1D58A]">
-                  {team.points || 0}
-                </td>
-                <td className="px-4 py-3 text-center">{formatNrr(team.nrr)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function PerformersPanel({ topBatter, topBowler, bestStrikeRate, mostPom }) {
-  const rows = [
-    {
-      label: "Top Run Scorer",
-      player: topBatter,
-      value: `${topBatter?.runs || 0} runs`,
-    },
-    {
-      label: "Top Wicket Taker",
-      player: topBowler,
-      value: `${topBowler?.wickets || 0} wickets`,
-    },
-    {
-      label: "Best Strike Rate",
-      player: bestStrikeRate,
-      value: `${bestStrikeRate?.strikeRate || 0}`,
-    },
-    {
-      label: "Most Player Of Match Awards",
-      player: mostPom,
-      value: `${mostPom?.awards || 0} awards`,
-    },
-  ];
-
-  if (!topBatter && !topBowler && !bestStrikeRate && !mostPom) {
-    return (
-      <EmptyCard
-        title="No player statistics available"
-        body="Top performers will appear after player statistics are recorded."
-      />
-    );
-  }
-
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {rows.map((row) => (
-        <PerformerCard key={row.label} {...row} />
+    <div className="viva-standings">
+      <div className="viva-table-head"><span>Pos</span><span>Team</span><span>P</span><span>W</span><span>NRR</span><span>Pts</span></div>
+      {teams.map((team, index) => (
+        <div className="viva-table-row" key={team.id || team.name}>
+          <span className="viva-position">{index + 1}</span><strong>{team.name}</strong><span>{team.played || 0}</span><span>{team.won || 0}</span><span>{Number(team.nrr || 0).toFixed(2)}</span><b>{team.points || 0}</b>
+        </div>
       ))}
     </div>
   );
 }
 
-function PerformerCard({ label, player, value }) {
-  const playerName = player?.playerName || "To be decided";
-  const initials = playerName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#07101F] p-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#D8B45A]/30 bg-black text-sm font-black text-[#F1D58A]">
-          {player?.photoUrl ? (
-            <Image
-              src={player.photoUrl}
-              alt={playerName}
-              fill
-              sizes="48px"
-              className="object-cover"
-            />
-          ) : (
-            initials || "VS"
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-[#D8B45A]">
-            {label}
-          </p>
-          <p className="truncate text-lg font-black">{playerName}</p>
-          <p className="truncate text-sm text-slate-400">
-            {player?.teamName || "Team TBA"}
-          </p>
-        </div>
-      </div>
-      <p className="mt-4 text-2xl font-black text-white">{value}</p>
-    </div>
-  );
+function Leader({ icon: Icon, label, name, value }) {
+  if (!name || !value) return null;
+  return <article className="viva-leader-card"><span><Icon /></span><p>{label}</p><h3>{name}</h3><strong>{value}</strong></article>;
 }
 
-function RecordsPanel({ stats, highestPartnership }) {
-  const highestTeamScore = stats?.highestTeamScore;
-  const highestIndividualScore = stats?.highestIndividualScore;
-  const bestBowlingFigures = stats?.bestBowlingFigures;
-
-  const records = [
-    {
-      label: "Highest Team Score",
-      title: highestTeamScore?.battingTeam || "No record yet",
-      value: highestTeamScore
-        ? `${highestTeamScore.score}/${highestTeamScore.wickets}`
-        : "-",
-    },
-    {
-      label: "Highest Individual Score",
-      title: highestIndividualScore?.playerName || "No record yet",
-      value: highestIndividualScore
-        ? `${highestIndividualScore.runs} runs`
-        : "-",
-    },
-    {
-      label: "Best Bowling Figures",
-      title: bestBowlingFigures?.playerName || "No record yet",
-      value: bestBowlingFigures
-        ? `${bestBowlingFigures.wickets}/${bestBowlingFigures.runsConceded}`
-        : "-",
-    },
-    {
-      label: "Highest Partnership",
-      title: highestPartnership
-        ? `${highestPartnership.batterA} and ${highestPartnership.batterB}`
-        : "No record yet",
-      value: highestPartnership ? `${highestPartnership.runs} runs` : "-",
-    },
-  ];
-
+function Highlights({ settings }) {
+  const items = [
+    ["Champion", settings.pastChampion, Trophy],
+    ["Runner-up", settings.pastRunnerUp, Medal],
+    ["Best batter", settings.pastBestBatter, Target],
+    ["Best bowler", settings.pastBestBowler, Zap],
+    ["Player of tournament", settings.pastPlayerOfTournament, Star],
+  ].filter(([, value]) => value);
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      {records.map((record) => (
-        <article
-          key={record.label}
-          className="rounded-xl border border-[#D8B45A]/15 bg-[#07101F] p-5"
-        >
-          <p className="text-xs font-bold uppercase tracking-wider text-[#D8B45A]">
-            {record.label}
-          </p>
-          <h3 className="mt-3 text-lg font-black">{record.title}</h3>
-          <p className="mt-2 text-2xl font-black text-white">{record.value}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function SponsorsSection({ sponsors }) {
-  return (
-    <section className="space-y-8">
-      <div className="space-y-5">
-        <SectionHeader
-          icon={Trophy}
-          title="🏆 Title Sponsors"
-          subtitle="Premier tournament partners in the spotlight"
-          href="/sponsors"
-          action="View All"
-        />
-        <FeaturedSponsorCarousel sponsors={sponsors} />
-      </div>
-
-      <div className="space-y-5">
-        <SectionHeader
-          icon={Star}
-          title="Our Sponsors"
-          subtitle="Tournament partners powering the competition"
-          href="/sponsors"
-          action="View All"
-        />
-        <SponsorGrid sponsors={sponsors} />
+    <section className="viva-section viva-cream">
+      <div className="viva-container">
+        <SectionHeading eyebrow="Honour roll" title="Past tournament highlights" copy="Celebrating the teams and players who left their mark on Viva Sports history." dark />
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {items.map(([label, value, Icon]) => <article className="viva-honour-card" key={label}><Icon /><p>{label}</p><h3>{value}</h3><span>{settings.pastTournamentName || "Viva Sports Championship"}</span></article>)}
+        </div>
       </div>
     </section>
   );
 }
 
-function EmptyCard({ title, body }) {
+function Gallery({ images }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#D8B45A]/20 bg-[#07101F]/80 p-6 text-center">
-      <h3 className="text-xl font-black">{title}</h3>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-400">{body}</p>
-    </div>
+    <section className="viva-section viva-data-section">
+      <div className="viva-container">
+        <SectionHeading eyebrow="From the boundary" title="Moments that make the game" copy="A glimpse of the energy, emotion and community around Viva Sports." action="View full gallery" href="/gallery" />
+        <div className="viva-gallery">
+          {images.map((src, index) => <Link href="/gallery" className="viva-gallery-item" key={`${src}-${index}`}><Image src={src} alt={`Viva Sports gallery moment ${index + 1}`} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" unoptimized /><span><Camera /></span></Link>)}
+        </div>
+      </div>
+    </section>
   );
 }
 
-function SkeletonGrid() {
+function Sponsors({ sponsors }) {
+  const labels = ["Title sponsor", "Powered by", "Equipment partner", "Media partner", "Associate partner"];
   return (
-    <div className="grid gap-4">
-      {[0, 1].map((item) => (
-        <div
-          key={item}
-          className="h-72 animate-pulse rounded-2xl border border-white/10 bg-[#07101F]"
-        />
-      ))}
-    </div>
+    <section className="viva-section viva-sponsors">
+      <div className="viva-container">
+        <SectionHeading eyebrow="Our partners" title="Backed by people who believe in the game" copy="Our partners help us create better opportunities and a stronger stage for local sport." dark />
+        <div className="viva-sponsor-grid">
+          {sponsors.slice(0, 12).map((sponsor, index) => (
+            <article className={`viva-sponsor ${index === 0 ? "viva-sponsor-featured" : ""}`} key={sponsor.id}>
+              <p>{index < 4 ? labels[index] : labels[4]}</p>
+              <div><Image src={sponsor.image} alt={sponsor.name} width={220} height={120} className="h-full w-full object-contain" /></div>
+              <span>{sponsor.name}</span>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
+}
+
+function Testimonials({ items }) {
+  return (
+    <section className="viva-section viva-data-section">
+      <div className="viva-container">
+        <SectionHeading eyebrow="Community voices" title="Trusted across the sporting community" copy="What captains, players, sponsors and organizers say about Viva Sports." />
+        <div className="viva-testimonials">
+          {items.slice(0, 6).map((item, index) => <blockquote key={`${item.name}-${index}`}><div className="viva-stars">★★★★★</div><p>“{item.quote}”</p><footer><strong>{item.name}</strong><span>{item.role}</span></footer></blockquote>)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Contact({ settings }) {
+  const phone = settings?.contactPhone || "+91 00000 00000";
+  const email = settings?.contactEmail || "hello@vivasports.in";
+  const location = settings?.contactLocation || "India";
+  return (
+    <section id="contact" className="viva-contact">
+      <div className="viva-contact-map" style={settings?.googleMapsEmbed ? { backgroundImage: `linear-gradient(rgba(3,12,26,.76),rgba(3,12,26,.76)),url(${settings.googleMapsEmbed})` } : undefined} />
+      <div className="viva-container viva-contact-inner">
+        <div><p className="viva-kicker">Let’s play</p><h2>Bring your team into the Viva Sports community.</h2><p>For tournament participation, partnerships or general enquiries, our team would be glad to hear from you.</p><Link href={`mailto:${email}`} className="viva-button viva-button-gold">Contact Viva Sports <ArrowRight /></Link></div>
+        <div className="viva-contact-card">
+          <ContactRow icon={Phone} label="Phone" value={phone} href={`tel:${phone.replace(/\s/g, "")}`} />
+          <ContactRow icon={MessageCircle} label="WhatsApp" value={settings?.whatsapp || phone} href={settings?.whatsappUrl || `https://wa.me/${phone.replace(/\D/g, "")}`} />
+          <ContactRow icon={Mail} label="Email" value={email} href={`mailto:${email}`} />
+          <ContactRow icon={MapPin} label="Location" value={location} href={settings?.googleMapsUrl || "#"} />
+          <div className="viva-socials">
+            <a href={settings?.instagramUrl || "#"} aria-label="Instagram"><Camera /></a>
+            <a href={settings?.youtubeChannel || "#"} aria-label="YouTube"><CirclePlay /></a>
+            <a href={settings?.facebookUrl || "#"} aria-label="Facebook"><Radio /></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ContactRow({ icon: Icon, label, value, href }) {
+  return <a href={href} className="viva-contact-row"><span><Icon /></span><div><small>{label}</small><strong>{value}</strong></div><ChevronRight /></a>;
+}
+
+function ProfessionalEmpty({ icon: Icon, title, text, href, action, light = false }) {
+  return <article className={`viva-empty ${light ? "viva-empty-light" : ""}`}><span><Icon /></span><div><h3>{title}</h3><p>{text}</p></div><Link href={href}>{action}<ArrowRight /></Link></article>;
+}
+
+function LoadingCard() {
+  return <div className="viva-loading"><span /><span /><span /></div>;
 }

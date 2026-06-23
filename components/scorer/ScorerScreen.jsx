@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { arrayUnion } from "firebase/firestore";
 import useMatch from "@/hooks/useMatch";
 import BallControls from "@/components/scorer/BallControls";
 import CurrentOver from "@/components/scorer/CurrentOver";
@@ -213,17 +214,25 @@ function getBowlerOvers(bowler) {
 }
 
 export default function ScorerScreen({ matchId }) {
-  const { match, loading } = useMatch(matchId);
+  const { match: remoteMatch, loading } = useMatch(matchId);
 
   const [showBatterModal, setShowBatterModal] = useState(false);
   const [showBowlerModal, setShowBowlerModal] = useState(false);
   const [showDismissalModal, setShowDismissalModal] = useState(false);
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [slowWrite, setSlowWrite] = useState(false);
   const [actionToast, setActionToast] = useState("");
   const [tossWinnerInput, setTossWinnerInput] = useState("");
   const [tossDecisionInput, setTossDecisionInput] = useState("");
+  const [optimisticMatch, setOptimisticMatch] = useState(null);
   const toastTimer = useRef(null);
+  const pendingWritesRef = useRef(0);
+  const duplicateLockRef = useRef(false);
+  const updateLockTimer = useRef(null);
+  const slowWriteTimer = useRef(null);
+  const renderCount = useRef(0);
+  const match = optimisticMatch || remoteMatch;
 
   const scorerState = useMemo(() => {
     const currentMatch = match || {};
@@ -256,8 +265,39 @@ export default function ScorerScreen({ matchId }) {
       if (toastTimer.current) {
         clearTimeout(toastTimer.current);
       }
+
+      if (updateLockTimer.current) {
+        clearTimeout(updateLockTimer.current);
+      }
+
+      if (slowWriteTimer.current) {
+        clearTimeout(slowWriteTimer.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!remoteMatch || !optimisticMatch) return;
+
+    if ((remoteMatch.updatedAt || 0) >= (optimisticMatch.updatedAt || 0)) {
+      const clearOptimisticTimer = setTimeout(() => {
+        setOptimisticMatch(null);
+      }, 0);
+
+      return () => clearTimeout(clearOptimisticTimer);
+    }
+  }, [remoteMatch, optimisticMatch]);
+
+  useEffect(() => {
+    renderCount.current += 1;
+
+    console.info("[perf] ScorerScreen render", {
+      matchId,
+      renderCount: renderCount.current,
+      optimistic: Boolean(optimisticMatch),
+      pendingWrites: pendingWritesRef.current,
+    });
+  });
 
   if (loading) {
     return <LoadingSkeleton title="SCORER" />;
@@ -288,6 +328,73 @@ export default function ScorerScreen({ matchId }) {
     toastTimer.current = setTimeout(() => {
       setActionToast("");
     }, 1500);
+  }
+
+  function createUpdatedAt() {
+    return Date.now();
+  }
+
+  function getDocumentSize(value) {
+    try {
+      return JSON.stringify(value).length;
+    } catch {
+      return "unavailable";
+    }
+  }
+
+  function persistOptimisticOperation({ actionName, nextMatch, write }) {
+    const actionTimerLabel = `[perf] scorer action:${actionName}:${Date.now()}`;
+    console.time(actionTimerLabel);
+    console.info("[perf] optimistic match size", {
+      actionName,
+      jsonBytes: getDocumentSize(nextMatch),
+      balls: nextMatch.balls?.length || 0,
+      commentary: nextMatch.commentary?.length || 0,
+    });
+
+    setOptimisticMatch(nextMatch);
+    setIsUpdating(true);
+    setSlowWrite(false);
+    pendingWritesRef.current += 1;
+
+    if (updateLockTimer.current) {
+      clearTimeout(updateLockTimer.current);
+    }
+
+    if (slowWriteTimer.current) {
+      clearTimeout(slowWriteTimer.current);
+    }
+
+    updateLockTimer.current = setTimeout(() => {
+      duplicateLockRef.current = false;
+      setIsUpdating(false);
+    }, 250);
+
+    slowWriteTimer.current = setTimeout(() => {
+      if (pendingWritesRef.current > 0) {
+        setSlowWrite(true);
+      }
+    }, 1000);
+
+    Promise.resolve()
+      .then(write)
+      .catch((error) => {
+        console.error("[perf] scorer write failed", {
+          actionName,
+          error,
+        });
+        setOptimisticMatch(null);
+        showActionToast("Update failed");
+      })
+      .finally(() => {
+        pendingWritesRef.current = Math.max(0, pendingWritesRef.current - 1);
+
+        if (pendingWritesRef.current === 0) {
+          setSlowWrite(false);
+        }
+
+        console.timeEnd(actionTimerLabel);
+      });
   }
 
   function withUndoHistory(update, before = createSnapshot(match)) {
@@ -349,43 +456,6 @@ export default function ScorerScreen({ matchId }) {
     showActionToast("Toss Complete");
   }
 
-  async function finishMatch(resultData, finalScore, finalWickets) {
-    await updateMatch(matchId, {
-      status: "completed",
-      winner: resultData.winner,
-      result: resultData.result,
-      secondInningsScore: finalScore,
-      secondInningsWickets: finalWickets,
-      completedAt: Date.now(),
-    });
-  }
-
-  async function startSecondInningsFrom(firstInningsScore, firstInningsWickets) {
-    await updateMatch(matchId, {
-      status: "innings_break",
-      firstInningsScore,
-      firstInningsWickets,
-      innings: 2,
-      target: firstInningsScore + 1,
-      score: 0,
-      wickets: 0,
-      overs: "0.0",
-      totalBalls: 0,
-      currentOver: [],
-      balls: [],
-      outPlayers: [],
-      striker: null,
-      nonStriker: null,
-      currentBowler: null,
-      battingTeam: match.bowlingTeam,
-      bowlingTeam: match.battingTeam,
-      battingTeamPlayers: match.bowlingTeamPlayers,
-      bowlingTeamPlayers: match.battingTeamPlayers,
-    });
-
-    setShowBatterModal(true);
-  }
-
   async function handleDelivery({
     label,
     commentaryText,
@@ -399,17 +469,24 @@ export default function ScorerScreen({ matchId }) {
     dismissalType = null,
     fielder = null,
   }) {
-    if (isUpdating || match.status === "completed" || match.status === "paused") return;
+    if (
+      isUpdating ||
+      duplicateLockRef.current ||
+      match.status === "completed" ||
+      match.status === "paused"
+    ) {
+      return;
+    }
 
     if (!match.striker || !match.nonStriker || !match.currentBowler) {
       alert("Select batters and bowler first");
       return;
     }
 
-    setIsUpdating(true);
-
-    try {
+    {
+      duplicateLockRef.current = true;
       const before = createSnapshot(match);
+      const updatedAt = createUpdatedAt();
       const previousTotalBalls = match.totalBalls || 0;
       const totalBalls = previousTotalBalls + (isLegalDelivery ? 1 : 0);
       const overComplete = isLegalDelivery && totalBalls % 6 === 0;
@@ -468,10 +545,11 @@ export default function ScorerScreen({ matchId }) {
         fielder,
         commentary: `${ballNumber} ${match.currentBowler.name} to ${match.striker.name}, ${commentaryText}`,
         before,
-        createdAt: Date.now(),
+        createdAt: updatedAt,
       };
       const balls = getWritableEvents(match, "balls");
       const commentary = getWritableEvents(match, "commentary");
+      const compactRecord = compactBallRecord(ballRecord);
 
       const currentOver =
         previousTotalBalls % 6 === 0 && (match.currentOver || []).length >= 6
@@ -488,11 +566,18 @@ export default function ScorerScreen({ matchId }) {
         striker: nextStriker,
         nonStriker: nextNonStriker,
         currentBowler: bowler,
-        balls: [...balls, compactBallRecord(ballRecord)],
-        commentary: [...commentary, compactBallRecord(ballRecord)],
+        balls: arrayUnion(compactRecord),
+        commentary: arrayUnion(compactRecord),
         bowlerChangeBefore: null,
         undoStack: pushHistory(getUndoStack(match), before),
         redoStack: [],
+        updatedAt,
+      };
+      const nextMatchBase = {
+        ...match,
+        ...baseUpdate,
+        balls: [...balls, compactRecord],
+        commentary: [...commentary, compactRecord],
       };
 
       const inningsFinished = isInningsComplete({
@@ -502,8 +587,42 @@ export default function ScorerScreen({ matchId }) {
       });
 
       if (inningsFinished && match.innings === 1) {
-        await updateMatch(matchId, baseUpdate);
-        await startSecondInningsFrom(newScore, newWickets);
+        const secondInningsUpdate = {
+          status: "innings_break",
+          firstInningsScore: newScore,
+          firstInningsWickets: newWickets,
+          innings: 2,
+          target: newScore + 1,
+          score: 0,
+          wickets: 0,
+          overs: "0.0",
+          totalBalls: 0,
+          currentOver: [],
+          balls: [],
+          commentary: [],
+          outPlayers: [],
+          striker: null,
+          nonStriker: null,
+          currentBowler: null,
+          battingTeam: match.bowlingTeam,
+          bowlingTeam: match.battingTeam,
+          battingTeamPlayers: match.bowlingTeamPlayers,
+          bowlingTeamPlayers: match.battingTeamPlayers,
+          updatedAt: updatedAt + 1,
+        };
+        const nextMatch = {
+          ...nextMatchBase,
+          ...secondInningsUpdate,
+        };
+
+        persistOptimisticOperation({
+          actionName: label,
+          nextMatch,
+          write: async () => {
+            await updateMatch(matchId, baseUpdate);
+            await updateMatch(matchId, secondInningsUpdate);
+          },
+        });
         return;
       }
 
@@ -511,13 +630,36 @@ export default function ScorerScreen({ matchId }) {
         const resultData = getMatchResult(match, newScore, newWickets, totalBalls);
 
         if (resultData) {
-          await updateMatch(matchId, baseUpdate);
-          await finishMatch(resultData, newScore, newWickets);
+          const completionUpdate = {
+            ...baseUpdate,
+            status: "completed",
+            winner: resultData.winner,
+            result: resultData.result,
+            secondInningsScore: newScore,
+            secondInningsWickets: newWickets,
+            completedAt: updatedAt,
+          };
+          const nextMatch = {
+            ...nextMatchBase,
+            ...completionUpdate,
+            balls: nextMatchBase.balls,
+            commentary: nextMatchBase.commentary,
+          };
+
+          persistOptimisticOperation({
+            actionName: label,
+            nextMatch,
+            write: () => updateMatch(matchId, completionUpdate),
+          });
           return;
         }
       }
 
-      await updateMatch(matchId, baseUpdate);
+      persistOptimisticOperation({
+        actionName: label,
+        nextMatch: nextMatchBase,
+        write: () => updateMatch(matchId, baseUpdate),
+      });
 
       if (isWicket && !inningsFinished) {
         setShowBatterModal(true);
@@ -526,8 +668,6 @@ export default function ScorerScreen({ matchId }) {
       if (overComplete && !inningsFinished) {
         setShowBowlerModal(true);
       }
-    } finally {
-      setIsUpdating(false);
     }
   }
 
@@ -940,6 +1080,11 @@ export default function ScorerScreen({ matchId }) {
         </div>
 
         <ScorerActionToast message={actionToast} />
+        {slowWrite && (
+          <p className="rounded-xl border border-yellow-400/20 bg-yellow-500/10 p-3 text-sm font-bold text-yellow-200">
+            Saving is taking longer than usual. Scoring remains available.
+          </p>
+        )}
 
         {match.status === "completed" && (
           <div className="bg-[#101D35] rounded-3xl p-8 text-center">

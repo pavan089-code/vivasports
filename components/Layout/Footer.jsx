@@ -4,11 +4,16 @@ import Link from "next/link";
 import Container from "./Container";
 
 const quickLinks = [
-  ["Home", "/"],
-  ["Live", "/live"],
+  ["About", "/#about"],
+  ["Committee", "/committee"],
+  ["Champions", "/champions"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
+  ["Live Matches", "/live"],
+  ["Gallery", "/gallery"],
   ["Sponsors", "/sponsors"],
+  ["History", "/history"],
+  ["Contact", "/#contact"],
 ];
 
 const tournamentLinks = [
@@ -32,7 +37,7 @@ const tournamentLinks = [
 
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-[#D8B45A]/20 bg-[#020611]">
+    <footer className="border-t border-[#D8B45A]/20 bg-[#020914]">
       <Container>
         <div className="grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
@@ -47,22 +52,23 @@ export default function Footer() {
                 />
               </span>
               <div>
-                <h2 className="text-2xl font-black text-white">Viva Sports</h2>
+                <h2 className="font-serif text-2xl text-white">Viva Sports</h2>
+                <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#D8B45A]">Play with purpose</p>
               </div>
             </div>
 
             <p className="mt-5 max-w-sm text-sm leading-6 text-slate-400">
-              Premium live cricket coverage, tournament standings, match
-              centres, player records and broadcast-ready competition updates.
+              Promoting sportsmanship, local talent and competitive excellence
+              through professionally organized community cricket.
             </p>
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-white">Quick Links</h3>
+            <h3 className="mb-4 font-semibold text-white">Explore</h3>
             <div className="space-y-2 text-sm text-slate-400">
               {quickLinks.map(([label, href]) => (
                 <Link
-                  key={href}
+                  key={`${label}-${href}`}
                   href={href}
                   className="block transition hover:text-[#F1D58A]"
                 >
@@ -73,11 +79,11 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-white">Tournament Info</h3>
+            <h3 className="mb-4 font-semibold text-white">Competition</h3>
             <div className="space-y-2 text-sm text-slate-400">
               {tournamentLinks.map(([label, href]) => (
                 <Link
-                  key={href}
+                  key={`${label}-${href}`}
                   href={href}
                   className="block transition hover:text-[#F1D58A]"
                 >
@@ -88,27 +94,29 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 font-semibold text-white">Sponsors</h3>
+            <h3 className="mb-4 font-semibold text-white">Get involved</h3>
             <div className="space-y-2 text-sm text-slate-400">
               <Link
                 href="/sponsors"
                 className="block transition hover:text-[#F1D58A]"
               >
-                All Sponsors
+                Partner with Viva Sports
               </Link>
+              <Link href="/#contact" className="mt-2 block transition hover:text-[#F1D58A]">Register a team</Link>
+              <Link href="/#contact" className="mt-2 block transition hover:text-[#F1D58A]">Contact us</Link>
             </div>
 
             <h3 className="mb-4 mt-7 font-semibold text-white">Social Links</h3>
             <div className="space-y-2 text-sm text-slate-400">
-              <p>Instagram</p>
-              <p>YouTube</p>
-              <p>Facebook</p>
+              <a href="#" className="block transition hover:text-[#F1D58A]">Instagram</a>
+              <a href="#" className="block transition hover:text-[#F1D58A]">YouTube</a>
+              <a href="#" className="block transition hover:text-[#F1D58A]">Facebook</a>
             </div>
           </div>
         </div>
 
         <div className="border-t border-white/10 py-5 text-sm text-slate-500">
-          Viva Sports. Built for premium tournament coverage.
+          © {new Date().getFullYear()} Viva Sports. Sportsmanship, talent and competitive excellence.
         </div>
       </Container>
     </footer>

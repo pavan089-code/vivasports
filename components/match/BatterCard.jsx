@@ -1,4 +1,6 @@
-export default function BatterCard({ batter, isStriker }) {
+import { memo } from "react";
+
+function BatterCard({ batter, isStriker }) {
   // console.log("BATTER CARD", batter);
   if (!batter) return null;
 
@@ -61,3 +63,5 @@ export default function BatterCard({ batter, isStriker }) {
     </div>
   );
 }
+
+export default memo(BatterCard);

@@ -9,13 +9,18 @@ import Container from "./Container";
 
 const primaryLinks = [
   ["Home", "/"],
+  ["About", "/about"],
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
-  ["Sponsors", "/sponsors"],
 ];
 
 const secondaryLinks = [
+  ["Committee", "/committee"],
+  ["Champions", "/champions"],
+  ["Gallery", "/gallery"],
+  ["Sponsors", "/sponsors"],
+  ["History", "/history"],
   ["Points Table", "/pointstable"],
   ["Teams", "/teams"],
   ["Players", "/players"],
@@ -44,7 +49,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#D8B45A]/20 bg-[#020611]/95 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[#D8B45A]/15 bg-[#020914]/95 backdrop-blur-xl">
       <Container>
         <div className="flex min-h-20 items-center justify-between gap-4">
           <Link
@@ -63,16 +68,15 @@ export default function Navbar() {
               />
             </span>
             <span className="min-w-0">
-              <span className="block text-xl font-black tracking-wide text-white sm:text-2xl">
-                Viva Sports
-              </span>
+              <span className="block font-serif text-xl tracking-wide text-white sm:text-2xl">Viva Sports</span>
+              <span className="hidden text-[9px] font-black uppercase tracking-[.22em] text-[#D8B45A] sm:block">Community · Competition · Excellence</span>
             </span>
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-300 lg:flex">
             {primaryLinks.map(([label, href]) => (
               <Link
-                key={href}
+                key={`${label}-${href}`}
                 href={href}
                 className="transition hover:text-[#F1D58A]"
               >
@@ -93,7 +97,7 @@ export default function Navbar() {
                 <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-64 gap-3 overflow-y-auto rounded-xl border border-[#D8B45A]/20 bg-[#07101F] p-4 shadow-2xl shadow-black/50">
                   {secondaryLinks.map(([label, href]) => (
                     <Link
-                      key={href}
+                      key={`${label}-${href}`}
                       href={href}
                       onClick={closeMenus}
                       className="transition hover:text-[#F1D58A]"
@@ -121,7 +125,7 @@ export default function Navbar() {
           <div className="mx-auto grid max-w-7xl gap-2 px-4 py-5 text-white">
             {primaryLinks.map(([label, href]) => (
               <Link
-                key={href}
+                key={`${label}-${href}`}
                 href={href}
                 onClick={closeMenus}
                 className="rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 font-semibold"
@@ -145,7 +149,7 @@ export default function Navbar() {
               <div className="grid gap-2 rounded-xl border border-[#D8B45A]/15 bg-[#07101F]/70 p-2">
                 {secondaryLinks.map(([label, href]) => (
                   <Link
-                    key={href}
+                    key={`${label}-${href}`}
                     href={href}
                     onClick={closeMenus}
                     className="rounded-lg px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"

@@ -9,6 +9,14 @@ export default function AdminSidebar({
     ["Historical Import", "/admin/historical-match"],
     ["Audit Mode", "/admin/audit"],
   ];
+  const contentLinks = [
+    ["About", "/admin/about"],
+    ["Committee", "/admin/committee"],
+    ["Champions", "/admin/champions"],
+    ["Gallery", "/admin/gallery"],
+    ["Sponsors", "/admin/sponsors"],
+    ["History", "/admin/history"],
+  ];
   const tabs = [
     "dashboard",
     "teams",
@@ -82,11 +90,22 @@ export default function AdminSidebar({
 
         <div className="pt-6">
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
+            Website Content
+          </p>
+          {contentLinks.map(([label, href]) => (
+            <a key={`${label}-${href}`} href={href} onClick={onClose} className="mb-3 flex min-h-12 items-center justify-center rounded-xl bg-[#101D35] px-3 text-center text-sm font-semibold text-[var(--text-secondary)]">
+              {label}
+            </a>
+          ))}
+        </div>
+
+        <div className="pt-6">
+          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
             Operations
           </p>
           {operationLinks.map(([label, href]) => (
             <a
-              key={href}
+              key={`${label}-${href}`}
               href={href}
               onClick={onClose}
               className="mb-3 flex min-h-12 items-center justify-center rounded-xl bg-[#101D35] px-3 text-center text-sm font-semibold text-[var(--text-secondary)]"

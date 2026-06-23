@@ -32,13 +32,35 @@ export async function updateMatch(
   data
 ) {
   const matchRef = doc(db, "matches", matchId);
+  const timerLabel = `[perf] updateMatch:${matchId}:${Date.now()}`;
+  const payloadKeys = Object.keys(data || {});
+
+  try {
+    console.info("[perf] updateMatch payload", {
+      matchId,
+      keys: payloadKeys,
+      jsonBytes: JSON.stringify(data || {}).length,
+    });
+  } catch {
+    console.info("[perf] updateMatch payload", {
+      matchId,
+      keys: payloadKeys,
+      jsonBytes: "unavailable",
+    });
+  }
+
+  console.time(timerLabel);
 
   await updateDoc(
     matchRef,
     data
   );
 
+  console.timeEnd(timerLabel);
+
   if (data.status === "completed") {
+    const completionTimerLabel = `[perf] completion side effects:${matchId}:${Date.now()}`;
+    console.time(completionTimerLabel);
     const { updatePointsTable } = await import("@/Lib/pointsTable");
     const { updatePlayerStats } = await import("@/services/playerStatsService");
     const { getSettings } = await import("@/services/SettingServices");
@@ -72,6 +94,8 @@ export async function updateMatch(
         });
       }
     }
+
+    console.timeEnd(completionTimerLabel);
   }
 }
 
@@ -80,12 +104,37 @@ export function subscribeToMatch(
   callback,
   onError
 ) {
+  const listenerLabel = `[perf] subscribeToMatch:${matchId}:${Date.now()}`;
+  console.info("[perf] subscribeToMatch start", { matchId });
+
   return onSnapshot(
     doc(db, "matches", matchId),
     (snapshot) => {
-      callback(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
+      console.time(listenerLabel);
+      const data = snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
+
+      if (data) {
+        try {
+          console.info("[perf] match snapshot", {
+            matchId,
+            jsonBytes: JSON.stringify(data).length,
+            balls: data.balls?.length || 0,
+            commentary: data.commentary?.length || 0,
+          });
+        } catch {
+          console.info("[perf] match snapshot", {
+            matchId,
+            jsonBytes: "unavailable",
+          });
+        }
+      }
+
+      callback(data);
+      console.timeEnd(listenerLabel);
     },
     (error) => {
+      console.error("[firestore-denied]", `matches/${matchId}`, error);
+
       if (onError) {
         onError(error);
       }
@@ -105,6 +154,8 @@ export function subscribeToMatches(callback, onError) {
       );
     },
     (error) => {
+      console.error("[firestore-denied]", "matches", error);
+
       if (onError) {
         onError(error);
       }

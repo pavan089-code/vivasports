@@ -80,7 +80,7 @@ export async function updateTeamByName(
   );
 }
 
-export function subscribeToTeams(callback) {
+export function subscribeToTeams(callback, onError) {
   return onSnapshot(
     collection(db, "teams"),
     (snapshot) => {
@@ -90,6 +90,13 @@ export function subscribeToTeams(callback) {
           ...doc.data(),
         }))
       );
+    },
+    (error) => {
+      console.error("[firestore-denied]", "teams", error);
+
+      if (onError) {
+        onError(error);
+      }
     }
   );
 }

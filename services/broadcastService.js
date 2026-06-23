@@ -114,8 +114,14 @@ export async function saveBroadcastSettings(data) {
   );
 }
 
-export function subscribeToBroadcastSettings(callback) {
+export function subscribeToBroadcastSettings(callback, onError) {
   return onSnapshot(broadcastRef(), (snapshot) => {
     callback(normalizeSettings(snapshot.exists() ? snapshot.data() : {}));
+  }, (error) => {
+    console.error("[firestore-denied]", "settings/broadcast", error);
+
+    if (onError) {
+      onError(error);
+    }
   });
 }

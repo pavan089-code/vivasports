@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 
 import BatterCard from "@/components/match/BatterCard";
 import { calculateOvers } from "@/utils/matchUtils";
 
-export default function LiveLowerContent({ match, commentary }) {
+function LiveLowerContent({ match, commentary }) {
   const commentaryRef = useRef(null);
+  const bowlerOvers = useMemo(
+    () => calculateOvers(match.currentBowler?.balls || 0),
+    [match.currentBowler?.balls]
+  );
 
   useEffect(() => {
     if (!commentaryRef.current) return;
@@ -30,7 +34,7 @@ export default function LiveLowerContent({ match, commentary }) {
             {match.currentBowler?.name || "Select Bowler"}
           </h3>
           <div className="mt-4 flex gap-6 text-slate-300">
-            <p>O: {calculateOvers(match.currentBowler?.balls || 0)}</p>
+            <p>O: {bowlerOvers}</p>
             <p>R: {match.currentBowler?.runs || 0}</p>
             <p>W: {match.currentBowler?.wickets || 0}</p>
           </div>
@@ -78,3 +82,5 @@ function MatchNotes({ notes = [] }) {
     </div>
   );
 }
+
+export default memo(LiveLowerContent);

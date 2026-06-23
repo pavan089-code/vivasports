@@ -1,9 +1,11 @@
-export default function CurrentOver({ balls }) {
+import { memo } from "react";
+
+function CurrentOver({ balls }) {
   return (
     <div className="flex gap-3 flex-wrap">
       {balls.map((ball, index) => (
         <div
-          key={index}
+          key={`${ball}-${index}`}
           className="
             min-w-14
             h-14
@@ -28,3 +30,5 @@ export default function CurrentOver({ balls }) {
     </div>
   );
 }
+
+export default memo(CurrentOver);

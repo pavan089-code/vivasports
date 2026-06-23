@@ -17,15 +17,18 @@ export default function useMatch(matchId) {
       return undefined;
     }
 
+    console.info("[perf] useMatch subscribe", { matchId });
     const unsubscribe = subscribeToMatch(
       matchId,
       (data) => {
+        console.time(`[perf] useMatch setState:${matchId}`);
         setState({
           error: null,
           loading: false,
           match: data,
           matchId,
         });
+        console.timeEnd(`[perf] useMatch setState:${matchId}`);
       },
       (subscriptionError) => {
         setState({
@@ -37,7 +40,10 @@ export default function useMatch(matchId) {
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      console.info("[perf] useMatch unsubscribe", { matchId });
+      unsubscribe();
+    };
   }, [matchId]);
 
   const isCurrentMatch = state.matchId === matchId;
