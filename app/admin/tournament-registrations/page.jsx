@@ -4,31 +4,34 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Filter, MessageSquare, Search, ShieldAlert, XCircle } from "lucide-react";
 
-const STORAGE_KEY = "vivaTournamentRegistrations";
+import {
+  subscribeToTournamentRegistrations,
+  updateTournamentRegistration,
+} from "@/services/registrationService";
+
 const statuses = ["All", "Pending Verification", "Approved", "Rejected", "Needs Changes", "Payment Pending", "Verified"];
-
-function readRegistrations() {
-  try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveRegistrations(items) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
 
 export default function TournamentRegistrationsAdminPage() {
   const [registrations, setRegistrations] = useState([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setRegistrations(readRegistrations());
-    });
-    return () => window.cancelAnimationFrame(frame);
+    const unsubscribe = subscribeToTournamentRegistrations(
+      (items) => {
+        setRegistrations(items);
+        setLoading(false);
+      },
+      (registrationError) => {
+        setRegistrations([]);
+        setError(registrationError?.message || "Unable to load registrations.");
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
 
   const filtered = useMemo(() => {
@@ -46,23 +49,21 @@ export default function TournamentRegistrationsAdminPage() {
     });
   }, [registrations, query, status]);
 
-  function updateStatus(id, nextStatus) {
-    const next = registrations.map((item) => {
-      if (item.id !== id) return item;
-      return {
-        ...item,
+  async function updateStatus(id, nextStatus) {
+    const current = registrations.find((item) => item.id === id);
+    try {
+      await updateTournamentRegistration(id, {
         status: nextStatus,
-        feeStatus: nextStatus === "Approved" || nextStatus === "Verified" ? "Paid" : item.feeStatus,
+        feeStatus: nextStatus === "Approved" || nextStatus === "Verified" ? "Paid" : current?.feeStatus || "Payment Pending",
         activity: [
           `${nextStatus} update saved`,
-          nextStatus === "Approved" ? "Approval email queued" : "Status email queued",
-          nextStatus === "Approved" ? "WhatsApp approval queued" : "WhatsApp status update queued",
-          ...(item.activity || []),
+          ...(current?.activity || []),
         ],
-      };
-    });
-    setRegistrations(next);
-    saveRegistrations(next);
+      });
+      setError("");
+    } catch (updateError) {
+      setError(updateError?.message || "Unable to update registration status.");
+    }
   }
 
   return (
@@ -71,7 +72,7 @@ export default function TournamentRegistrationsAdminPage() {
         <div>
           <p className="reg-kicker">Admin / Tournament Registrations</p>
           <h1>Registration CRM</h1>
-          <p>Review team entries, roster counts, documents, payment state and verification actions from the dedicated registration portal.</p>
+          <p>Review Firestore team entries, contact details, category, approval state and verification actions.</p>
         </div>
         <Link href="/admin">Back to Admin</Link>
       </section>
@@ -89,8 +90,12 @@ export default function TournamentRegistrationsAdminPage() {
         </div>
       </section>
 
+      {error && <p className="admin-reg-error">{error}</p>}
+
       <section className="admin-reg-grid">
-        {filtered.map((registration) => (
+        {loading && Array.from({ length: 3 }).map((_, index) => <div className="admin-reg-skeleton" key={index} />)}
+
+        {!loading && filtered.map((registration) => (
           <article className="admin-reg-card" key={registration.id}>
             <div className="admin-reg-top">
               <div className="admin-reg-logo">{registration.form?.team?.name?.slice(0, 2).toUpperCase() || "VS"}</div>
@@ -103,9 +108,10 @@ export default function TournamentRegistrationsAdminPage() {
             <div className="admin-reg-meta">
               <p><span>Captain</span><strong>{registration.form?.captain?.fullName || "-"}</strong></p>
               <p><span>Phone</span><strong>{registration.form?.captain?.phone || "-"}</strong></p>
+              <p><span>WhatsApp</span><strong>{registration.form?.captain?.whatsapp || "-"}</strong></p>
+              <p><span>Email</span><strong>{registration.form?.captain?.email || "-"}</strong></p>
               <p><span>Fee Status</span><strong>{registration.feeStatus || "Payment Pending"}</strong></p>
-              <p><span>Players</span><strong>{registration.form?.players?.length || 0}</strong></p>
-              <p><span>Documents</span><strong>{Object.values(registration.form?.documents || {}).filter(Boolean).length}/6</strong></p>
+              <p><span>Players</span><strong>{registration.form?.players?.count || 0}</strong></p>
             </div>
             <div className="admin-reg-actions">
               <button type="button" onClick={() => updateStatus(registration.id, "Approved")}><CheckCircle2 /> Approve</button>
@@ -119,10 +125,10 @@ export default function TournamentRegistrationsAdminPage() {
           </article>
         ))}
 
-        {!filtered.length && (
+        {!loading && !filtered.length && (
           <div className="admin-reg-empty">
             <h2>No registrations found</h2>
-            <p>Submitted entries from the new portal will appear here for review.</p>
+            <p>Submitted Firestore entries from the registration page will appear here for review.</p>
           </div>
         )}
       </section>

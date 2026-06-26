@@ -9,36 +9,24 @@ import Container from "./Container";
 
 const primaryLinks = [
   ["Home", "/"],
-  ["About", "/about"],
-  ["Live", "/live"],
-  ["Fixtures", "/fixtures"],
-  ["Results", "/results"],
-  ["Register", "/register"],
+  ["About Us", "/about"],
+  ["Tournaments", "/seasons"],
+  ["Gallery", "/gallery"],
+  ["Sponsors", "/sponsors"],
+  ["Hall Of Fame", "/hall-of-fame"],
   ["Contact", "/contact"],
 ];
 
 const secondaryLinks = [
-  ["Committee", "/committee"],
-  ["Champions", "/champions"],
-  ["Gallery", "/gallery"],
-  ["Sponsors", "/sponsors"],
-  ["History", "/history"],
+  ["Live Matches", "/live"],
+  ["Fixtures", "/fixtures"],
+  ["Results", "/results"],
   ["Points Table", "/pointstable"],
   ["Teams", "/teams"],
   ["Players", "/players"],
-  ["Leaderboards", "/leaderboards"],
-  ["Awards", "/awards"],
-  ["Analytics", "/analytics"],
-  ["Statistics", "/stats"],
-  ["Seasons", "/seasons"],
-  ["Hall Of Fame", "/hall-of-fame"],
-  ["Rivalries", "/rivalries"],
-  ["Milestones", "/milestones"],
-  ["Match Reports", "/match-reports"],
-  ["MVP", "/mvp"],
-  ["Fantasy", "/fantasy"],
-  ["Power Rankings", "/power-rankings"],
-  ["Awards History", "/awards-history"],
+  ["Player Rankings", "/leaderboards"],
+  ["Scorer Login", "/matches"],
+  ["Admin Login", "/admin"],
 ];
 
 export default function Navbar() {
@@ -62,7 +50,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b border-white/10 bg-[#09153A]/88 shadow-2xl shadow-black/20 backdrop-blur-2xl transition-all duration-300 ${
+      className={`sticky top-0 z-50 border-b border-white/10 bg-[#07152E]/82 shadow-2xl shadow-black/20 backdrop-blur-2xl transition-all duration-300 ${
         scrolled ? "border-[#F4C95D]/20" : ""
       }`}
     >
@@ -101,12 +89,12 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-[#B6C1D9] lg:flex">
+          <nav className="hidden items-center gap-6 text-base font-semibold text-[#AAB8D5] lg:flex">
             {primaryLinks.map(([label, href]) => (
               <Link
                 key={`${label}-${href}`}
                 href={href}
-                className="transition hover:text-[#F4C95D]"
+                className="transition hover:text-[#F4C84B]"
               >
                 {label}
               </Link>
@@ -115,20 +103,20 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMoreOpen((value) => !value)}
-                className="inline-flex items-center gap-1 transition hover:text-[#F4C95D]"
+                className="inline-flex min-h-0 items-center gap-1 transition hover:text-[#F4C84B]"
               >
                 More
                 <ChevronDown className="h-4 w-4" />
               </button>
 
               {moreOpen && (
-                <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-64 gap-3 overflow-y-auto rounded-2xl border border-white/10 bg-[#12224D]/98 p-4 shadow-2xl shadow-black/50">
+                <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-72 gap-3 overflow-y-auto rounded-[24px] border border-white/10 bg-[#122246]/95 p-4 shadow-2xl shadow-black/50 backdrop-blur-xl">
                   {secondaryLinks.map(([label, href]) => (
                     <Link
                       key={`${label}-${href}`}
                       href={href}
                       onClick={closeMenus}
-                      className="transition hover:text-[#F4C95D]"
+                      className="transition hover:text-[#F4C84B]"
                     >
                       {label}
                     </Link>
@@ -137,6 +125,15 @@ export default function Navbar() {
               )}
             </div>
           </nav>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link
+              href="/register"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#F4C84B] px-5 text-sm font-black uppercase text-[#07152E] shadow-lg shadow-[#F4C84B]/20 transition hover:bg-[#FFD96A]"
+            >
+              Register Team
+            </Link>
+          </div>
 
           <button
             onClick={() => setOpen((value) => !value)}
@@ -161,6 +158,14 @@ export default function Navbar() {
                 {label}
               </Link>
             ))}
+
+            <Link
+              href="/register"
+              onClick={closeMenus}
+              className="rounded-2xl bg-[#F4C84B] px-4 py-3 text-center font-black uppercase text-[#07152E]"
+            >
+              Register Team
+            </Link>
 
             <button
               onClick={() => setMoreOpen((value) => !value)}
