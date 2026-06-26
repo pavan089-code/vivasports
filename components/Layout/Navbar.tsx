@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import Container from "./Container";
 
@@ -13,6 +13,8 @@ const primaryLinks = [
   ["Live", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
+  ["Register", "/register"],
+  ["Contact", "/contact"],
 ];
 
 const secondaryLinks = [
@@ -42,6 +44,16 @@ const secondaryLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const syncScrolled = () => setScrolled(window.scrollY > 24);
+
+    syncScrolled();
+    window.addEventListener("scroll", syncScrolled, { passive: true });
+
+    return () => window.removeEventListener("scroll", syncScrolled);
+  }, []);
 
   function closeMenus() {
     setOpen(false);
@@ -49,15 +61,27 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#D8B45A]/15 bg-[#020914]/95 backdrop-blur-xl">
+    <header
+      className={`sticky top-0 z-50 border-b border-white/10 bg-[#09153A]/88 shadow-2xl shadow-black/20 backdrop-blur-2xl transition-all duration-300 ${
+        scrolled ? "border-[#F4C95D]/20" : ""
+      }`}
+    >
       <Container>
-        <div className="flex min-h-20 items-center justify-between gap-4">
+        <div
+          className={`flex items-center justify-between gap-4 transition-all duration-300 ${
+            scrolled ? "min-h-16" : "min-h-20"
+          }`}
+        >
           <Link
             href="/"
             onClick={closeMenus}
             className="flex min-w-0 shrink-0 items-center gap-3"
           >
-            <span className="relative h-12 w-12 overflow-hidden rounded-full border border-[#D8B45A]/40 bg-black">
+            <span
+              className={`relative overflow-hidden rounded-full border border-[#F4C95D]/40 bg-black transition-all duration-300 ${
+                scrolled ? "h-10 w-10" : "h-12 w-12"
+              }`}
+            >
               <Image
                 src="/logo.jpeg"
                 alt="Viva Sports"
@@ -68,17 +92,21 @@ export default function Navbar() {
               />
             </span>
             <span className="min-w-0">
-              <span className="block font-serif text-xl tracking-wide text-white sm:text-2xl">Viva Sports</span>
-              <span className="hidden text-[9px] font-black uppercase tracking-[.22em] text-[#D8B45A] sm:block">Community · Competition · Excellence</span>
+              <span className="block text-xl font-black tracking-wide text-white sm:text-2xl">
+                Viva Sports
+              </span>
+              <span className="hidden text-[9px] font-black uppercase tracking-[.22em] text-[#F4C95D] sm:block">
+                Live Cricket Platform
+              </span>
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-300 lg:flex">
+          <nav className="hidden items-center gap-6 text-sm font-semibold text-[#B6C1D9] lg:flex">
             {primaryLinks.map(([label, href]) => (
               <Link
                 key={`${label}-${href}`}
                 href={href}
-                className="transition hover:text-[#F1D58A]"
+                className="transition hover:text-[#F4C95D]"
               >
                 {label}
               </Link>
@@ -87,20 +115,20 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMoreOpen((value) => !value)}
-                className="inline-flex items-center gap-1 transition hover:text-[#F1D58A]"
+                className="inline-flex items-center gap-1 transition hover:text-[#F4C95D]"
               >
                 More
                 <ChevronDown className="h-4 w-4" />
               </button>
 
               {moreOpen && (
-                <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-64 gap-3 overflow-y-auto rounded-xl border border-[#D8B45A]/20 bg-[#07101F] p-4 shadow-2xl shadow-black/50">
+                <div className="absolute right-0 top-9 z-50 grid max-h-[70vh] w-64 gap-3 overflow-y-auto rounded-2xl border border-white/10 bg-[#12224D]/98 p-4 shadow-2xl shadow-black/50">
                   {secondaryLinks.map(([label, href]) => (
                     <Link
                       key={`${label}-${href}`}
                       href={href}
                       onClick={closeMenus}
-                      className="transition hover:text-[#F1D58A]"
+                      className="transition hover:text-[#F4C95D]"
                     >
                       {label}
                     </Link>
@@ -112,7 +140,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setOpen((value) => !value)}
-            className="rounded-xl border border-[#D8B45A]/25 p-2 text-white lg:hidden"
+            className="rounded-2xl border border-[#F4C95D]/25 p-2 text-white lg:hidden"
             aria-label="Toggle navigation"
           >
             {open ? <X size={26} /> : <Menu size={26} />}
@@ -121,14 +149,14 @@ export default function Navbar() {
       </Container>
 
       {open && (
-        <div className="border-t border-[#D8B45A]/15 bg-[#020611] lg:hidden">
+        <div className="border-t border-[#F4C95D]/15 bg-[#09153A] lg:hidden">
           <div className="mx-auto grid max-w-7xl gap-2 px-4 py-5 text-white">
             {primaryLinks.map(([label, href]) => (
               <Link
                 key={`${label}-${href}`}
                 href={href}
                 onClick={closeMenus}
-                className="rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 font-semibold"
+                className="rounded-2xl border border-white/10 bg-[#12224D] px-4 py-3 font-semibold"
               >
                 {label}
               </Link>
@@ -136,7 +164,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setMoreOpen((value) => !value)}
-              className="flex items-center justify-between rounded-xl border border-white/10 bg-[#07101F] px-4 py-3 text-left font-semibold"
+              className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#12224D] px-4 py-3 text-left font-semibold"
               aria-expanded={moreOpen}
             >
               More
@@ -146,13 +174,13 @@ export default function Navbar() {
             </button>
 
             {moreOpen && (
-              <div className="grid gap-2 rounded-xl border border-[#D8B45A]/15 bg-[#07101F]/70 p-2">
+              <div className="grid gap-2 rounded-2xl border border-[#F4C95D]/15 bg-[#12224D]/70 p-2">
                 {secondaryLinks.map(([label, href]) => (
                   <Link
                     key={`${label}-${href}`}
                     href={href}
                     onClick={closeMenus}
-                    className="rounded-lg px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
+                    className="rounded-xl px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
                   >
                     {label}
                   </Link>

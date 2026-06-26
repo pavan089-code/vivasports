@@ -5,6 +5,7 @@ export default function AdminSidebar({
   onClose,
 }) {
   const operationLinks = [
+    ["Tournament Registrations", "/admin/tournament-registrations"],
     ["Points Manager", "/admin/points-table"],
     ["Historical Import", "/admin/historical-match"],
     ["Audit Mode", "/admin/audit"],
