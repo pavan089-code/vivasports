@@ -43,7 +43,7 @@ export default function PointsTablePreview() {
   const rankedTeams = useMemo(() => rankTeams(teams), [teams]);
 
   return (
-    <section className="py-6 md:py-16">
+    <section className="py-16 md:py-24">
       <Container>
         <SectionTitle
           title="Points Table"
