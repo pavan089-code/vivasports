@@ -1,28 +1,27 @@
-import { collection, doc, getDoc, getDocs, type DocumentData } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 
 import type { Sponsor } from "@/Lib/sponsors";
 import { db } from "@/Lib/firebase";
-import { getTopAllRounders, getTopBatters, getTopBowlers } from "@/utils/leaderboardUtils";
 import { getHallOfFame } from "@/utils/prestigeRankingsUtils";
-import { buildScorecard } from "@/utils/scorecardUtils";
-import { rankTeams, sortRecentMatches } from "@/utils/tournamentUtils";
+import { sortRecentMatches } from "@/utils/tournamentUtils";
 
 export type HomepageRecord = { id: string; [key: string]: unknown };
 export type HomepageTournament = HomepageRecord & {
   title?: string; edition?: string; status?: string; city?: string; startDate?: string;
-  teams?: number | string; subtitle?: string; trophyName?: string;
+  endDate?: string; poster?: string; prizePool?: string; teams?: number | string;
+  subtitle?: string; trophyName?: string; buttonText?: string; buttonLink?: string;
+  winner?: string; runnerUp?: string; playerOfTournament?: string;
+  registrationOpen?: boolean; registrationStatus?: string;
+  youtubeHighlights?: string; livestream?: string;
 };
 export type HomepageMatch = HomepageRecord & {
   status?: string; teamA?: string; teamB?: string; tournamentId?: string;
   date?: string; time?: string; ground?: string; result?: string;
-};
-export type HomepageTeam = HomepageRecord & {
-  name?: string; played?: number; won?: number; points?: number; nrr?: number;
+  featured?: boolean;
 };
 export type HomepagePlayer = HomepageRecord & {
   playerName?: string; teamName?: string; runs?: number; wickets?: number; sixes?: number;
 };
-export type HomepageSponsor = Partial<Sponsor> & HomepageRecord & { logo?: string; image?: string };
 export type HomepageStatistics = {
   topRunScorer?: HomepagePlayer;
   topWicketTaker?: HomepagePlayer;
@@ -31,6 +30,7 @@ export type HomepageStatistics = {
   mostSixes?: HomepagePlayer;
   fastestFifty?: { playerName?: string; teamName?: string; balls?: number };
 } | null;
+export type HomepageSponsor = Partial<Sponsor> & HomepageRecord & { logo?: string; image?: string };
 export type HomepageLegacy = {
   champions: HomepageRecord[];
   history: HomepageRecord[];
@@ -43,8 +43,6 @@ export type HomepageData = {
   liveMatches: HomepageMatch[];
   upcomingMatches: HomepageMatch[];
   recentResults: HomepageMatch[];
-  standings: HomepageTeam[];
-  statistics: HomepageStatistics;
   gallery: HomepageRecord[];
   sponsors: HomepageSponsor[];
   legacy: HomepageLegacy;
@@ -55,7 +53,7 @@ export type HomepageData = {
 
 const emptyHomepageData: HomepageData = {
   tournaments: [], matches: [], liveMatches: [], upcomingMatches: [], recentResults: [],
-  standings: [], statistics: null, gallery: [], sponsors: [],
+  gallery: [], sponsors: [],
   legacy: { champions: [], history: [], hall: null }, announcements: [], about: null,
   metrics: { tournaments: 0, teams: 0, players: 0 },
 };
@@ -98,9 +96,9 @@ export async function getHomepageData(fallbackSponsors: Sponsor[] = []): Promise
 
     const typedMatches = matches as HomepageMatch[];
     const typedPlayers = players as HomepagePlayer[];
-    const typedTeams = teams as HomepageTeam[];
     const typedTournaments = tournaments as HomepageTournament[];
-    const tournament = typedTournaments.find((item) => item.status === "live") ?? typedTournaments.find((item) => item.status === "upcoming");
+    const enrichedTournaments = typedTournaments.map((item) => enrichTournamentHonours(item, champions));
+    const tournament = enrichedTournaments.find((item) => item.status === "live") ?? enrichedTournaments.find((item) => item.status === "upcoming");
     const linkedMatches = tournament ? typedMatches.filter((match) => match.tournamentId === tournament.id) : [];
     const tournamentMatches = linkedMatches.length ? linkedMatches : typedMatches;
     const liveMatches = tournamentMatches.filter((match) => ["live", "paused", "innings_break"].includes(match.status ?? ""));
@@ -109,13 +107,11 @@ export async function getHomepageData(fallbackSponsors: Sponsor[] = []): Promise
 
     return {
       tournament,
-      tournaments: typedTournaments,
+      tournaments: enrichedTournaments,
       matches: typedMatches,
       liveMatches,
       upcomingMatches,
       recentResults,
-      standings: rankTeams(typedTeams).slice(0, 5) as HomepageTeam[],
-      statistics: buildStatistics(typedPlayers, typedMatches),
       gallery,
       sponsors: remoteSponsors.length ? remoteSponsors as HomepageSponsor[] : fallbackSponsors.map((item) => ({ ...item })),
       legacy: {
@@ -125,33 +121,27 @@ export async function getHomepageData(fallbackSponsors: Sponsor[] = []): Promise
       },
       announcements,
       about,
-      metrics: { tournaments: typedTournaments.length, teams: typedTeams.length, players: typedPlayers.length },
+      metrics: { tournaments: typedTournaments.length, teams: teams.length, players: typedPlayers.length },
     };
   } catch {
     return { ...emptyHomepageData, sponsors: fallbackSponsors.map((item) => ({ ...item })) };
   }
 }
 
-function buildStatistics(players: HomepagePlayer[], matches: HomepageMatch[]): HomepageStatistics {
-  if (!players.length && !matches.length) return null;
-  try {
-    const innings = matches
-      .filter((match) => match.status === "completed")
-      .flatMap((match) => buildScorecard(match as DocumentData).innings);
-    const highest = [...innings].sort((a, b) => b.score - a.score)[0];
-    const fastest = innings
-      .flatMap((item) => item.batting.map((player: { playerName?: string; runs: number; balls: number }) => ({ ...player, teamName: item.battingTeam })))
-      .filter((player) => player.runs >= 50)
-      .sort((a, b) => a.balls - b.balls)[0];
-    return {
-      topRunScorer: getTopBatters(players)[0],
-      topWicketTaker: getTopBowlers(players)[0],
-      bestAllRounder: getTopAllRounders(players)[0],
-      highestTeamScore: highest ? { name: highest.battingTeam, value: highest.score } : undefined,
-      mostSixes: [...players].sort((a, b) => (b.sixes || 0) - (a.sixes || 0))[0],
-      fastestFifty: fastest,
-    };
-  } catch {
-    return null;
-  }
+function enrichTournamentHonours(tournament: HomepageTournament, champions: HomepageRecord[]): HomepageTournament {
+  if (tournament.winner || tournament.runnerUp || tournament.playerOfTournament) return tournament;
+  const title = String(tournament.title || "").toLowerCase();
+  const edition = String(tournament.edition || "").toLowerCase();
+  const archived = champions.find((item) =>
+    item.tournamentId === tournament.id ||
+    String(item.tournamentName || "").toLowerCase() === title ||
+    (edition && String(item.season || item.edition || "").toLowerCase() === edition),
+  );
+  if (!archived) return tournament;
+  return {
+    ...tournament,
+    winner: String(archived.champion || archived.winner || ""),
+    runnerUp: String(archived.runnerUp || archived.runner_up || ""),
+    playerOfTournament: String(archived.playerOfTournament || archived.player_of_tournament || ""),
+  };
 }

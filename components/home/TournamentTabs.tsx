@@ -2,21 +2,19 @@
 
 import { motion } from "framer-motion";
 
-export type TournamentTab = "upcoming" | "live" | "completed";
+export type TournamentTab = "current" | "upcoming" | "past";
 
 export default function TournamentTabs({
   activeTab,
-  hasLiveTournaments,
   onChange,
 }: {
   activeTab: TournamentTab;
-  hasLiveTournaments: boolean;
   onChange: (tab: TournamentTab) => void;
 }) {
   const tabs: Array<{ id: TournamentTab; label: string }> = [
+    { id: "current", label: "Current" },
     { id: "upcoming", label: "Upcoming" },
-    { id: "live", label: hasLiveTournaments ? "Live" : "Current" },
-    { id: "completed", label: "Previous" },
+    { id: "past", label: "Past" },
   ];
 
   return (

@@ -19,6 +19,13 @@ export type Tournament = {
   buttonLink: string;
   subtitle?: string;
   trophyName?: string;
+  winner?: string;
+  runnerUp?: string;
+  playerOfTournament?: string;
+  registrationOpen?: boolean;
+  registrationStatus?: string;
+  youtubeHighlights?: string;
+  livestream?: string;
 };
 
 function toStringValue(value: unknown): string {
@@ -54,6 +61,13 @@ function mapTournament(snapshot: QueryDocumentSnapshot<DocumentData>): Tournamen
     buttonLink: toStringValue(data.buttonLink),
     subtitle: toStringValue(data.subtitle) || undefined,
     trophyName: toStringValue(data.trophyName) || undefined,
+    winner: toStringValue(data.winner || data.champion) || undefined,
+    runnerUp: toStringValue(data.runnerUp || data.runner_up) || undefined,
+    playerOfTournament: toStringValue(data.playerOfTournament || data.player_of_tournament) || undefined,
+    registrationOpen: Boolean(data.registrationOpen),
+    registrationStatus: toStringValue(data.registrationStatus) || undefined,
+    youtubeHighlights: toStringValue(data.youtubeHighlights) || undefined,
+    livestream: toStringValue(data.livestream) || undefined,
   };
 }
 
