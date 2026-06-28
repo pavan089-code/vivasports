@@ -12,8 +12,12 @@ import {
 import { db } from "@/Lib/firebase";
 
 export async function getAboutSettings() {
-  const snapshot = await getDoc(doc(db, "settings", "about"));
-  return snapshot.exists() ? snapshot.data() : null;
+  try {
+    const snapshot = await getDoc(doc(db, "settings", "about"));
+    return snapshot.exists() ? snapshot.data() : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function saveAboutSettings(data) {
@@ -24,11 +28,8 @@ export function subscribeToOrganizationCollection(collectionName, callback, onEr
   return onSnapshot(collection(db, collectionName), (snapshot) => {
     callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
   }, (error) => {
-    console.error("[firestore-denied]", collectionName, error);
-
-    if (onError) {
-      onError(error);
-    }
+    callback([]);
+    if (onError) onError(error);
   });
 }
 

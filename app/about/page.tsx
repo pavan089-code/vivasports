@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
 import OrganizationShell from "@/components/organization/OrganizationShell";
-import { AboutContent } from "@/components/organization/OrganizationPages";
-export const metadata: Metadata = { title: "About Viva Sports | Mission, Vision & Community Impact", description: "Discover the Viva Sports story, mission, values and impact on community cricket.", alternates: { canonical: "/about" }, openGraph: { title: "About Viva Sports", description: "Building communities through sport.", type: "website" }, twitter: { card: "summary_large_image", title: "About Viva Sports", description: "Building communities through sport." } };
-export default function Page() { return <OrganizationShell><AboutContent /></OrganizationShell>; }
+import AboutPageContent from "@/components/organization/AboutPageContent";
+
+const description = "Learn about Viva Sports Association, our journey since 2021, our founders, mission, vision, and commitment to promoting grassroots cricket through professionally managed tournaments.";
+
+export const metadata: Metadata = {
+  title: { absolute: "About Viva Sports | Viva Sports" },
+  description,
+  alternates: { canonical: "/about" },
+  openGraph: { title: "About Viva Sports | Viva Sports", description, type: "website" },
+  twitter: { card: "summary_large_image", title: "About Viva Sports | Viva Sports", description },
+};
+
+export default function Page() { return <OrganizationShell><AboutPageContent /></OrganizationShell>; }

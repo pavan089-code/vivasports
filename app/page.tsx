@@ -1,10 +1,8 @@
 import Navbar from "@/components/Layout/Navbar";
 import Footer from "@/components/Layout/Footer";
-import TournamentPortal from "@/components/home/TournamentPortal";
-import HomepageMatchCenter from "@/components/home/HomepageMatchCenter";
-import ScrollingAnnouncementBanner from "@/components/home/ScrollingAnnouncementBanner";
-import TournamentSection from "@/components/home/TournamentSection";
 import TournamentHighlightsCarousel from "@/components/home/TournamentHighlightsCarousel";
+import HomeBelowFold from "@/components/home/HomeBelowFold";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 import { sponsors } from "@/Lib/sponsors";
 import type { Metadata } from "next";
 
@@ -22,11 +20,9 @@ export default function HomePage() {
     <main className="vs-page">
       <Navbar />
       <TournamentHighlightsCarousel />
-      <ScrollingAnnouncementBanner />
-      <TournamentSection />
-      <HomepageMatchCenter />
-      <TournamentPortal sponsors={sponsors} />
+      <HomeBelowFold sponsors={sponsors} />
       <Footer />
+      <ScrollToTop />
     </main>
   );
 }

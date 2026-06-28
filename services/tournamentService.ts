@@ -69,6 +69,9 @@ export function subscribeToTournaments(
         .filter((tournament): tournament is Tournament => tournament !== null);
       onData(tournaments);
     },
-    (error) => onError?.(error),
+    (error) => {
+      onData([]);
+      onError?.(error);
+    },
   );
 }

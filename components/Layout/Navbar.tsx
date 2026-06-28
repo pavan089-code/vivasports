@@ -3,22 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import Container from "./Container";
 
 const primaryLinks = [
   ["Home", "/"],
-  ["About Us", "/about"],
   ["Tournaments", "/seasons"],
+  ["Live Center", "/live"],
   ["Gallery", "/gallery"],
   ["Sponsors", "/sponsors"],
   ["Hall Of Fame", "/hall-of-fame"],
+  ["About Us", "/about"],
   ["Contact", "/contact"],
 ];
 
 const secondaryLinks = [
-  ["Live Matches", "/live"],
+  ["Live Center", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
   ["Points Table", "/pointstable"],
@@ -30,6 +32,7 @@ const secondaryLinks = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -54,27 +57,27 @@ export default function Navbar() {
         scrolled ? "border-[#F4C95D]/20" : ""
       }`}
     >
-      <Container>
+      <Container className="max-w-[1536px] px-3 sm:px-4 lg:px-5 xl:px-6">
         <div
-          className={`flex items-center justify-between gap-4 transition-all duration-300 ${
+          className={`flex flex-nowrap items-center justify-between gap-3 transition-all duration-300 ${
             scrolled ? "min-h-16" : "min-h-20"
           }`}
         >
           <Link
             href="/"
             onClick={closeMenus}
-            className="flex min-w-0 shrink-0 items-center gap-3"
+            className="flex min-w-0 shrink-0 items-center gap-2"
           >
             <span
               className={`relative overflow-hidden rounded-full border border-[#F4C95D]/40 bg-black transition-all duration-300 ${
-                scrolled ? "h-10 w-10" : "h-12 w-12"
+                scrolled ? "h-11 w-11" : "h-14 w-14"
               }`}
             >
               <Image
                 src="/logo.jpeg"
                 alt="Viva Sports"
                 fill
-                sizes="48px"
+                sizes="56px"
                 className="object-cover"
                 priority
               />
@@ -89,21 +92,28 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 text-base font-semibold text-[#AAB8D5] lg:flex">
-            {primaryLinks.map(([label, href]) => (
+          <nav className="hidden flex-nowrap items-center gap-0.5 whitespace-nowrap text-[13px] font-semibold text-[#AAB8D5] min-[1200px]:flex min-[1400px]:gap-1">
+            {primaryLinks.map(([label, href]) => {
+              const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+              return (
               <Link
                 key={`${label}-${href}`}
                 href={href}
-                className="transition hover:text-[#F4C84B]"
+                aria-current={active ? "page" : undefined}
+                className={`relative shrink-0 rounded-full px-1.5 py-2 transition duration-200 hover:-translate-y-0.5 hover:text-[#F4C84B] min-[1400px]:px-2 ${
+                  active ? "bg-white/6 text-[#F4C84B]" : ""
+                }`}
               >
                 {label}
               </Link>
-            ))}
+              );
+            })}
 
             <div className="relative">
               <button
                 onClick={() => setMoreOpen((value) => !value)}
-                className="inline-flex min-h-0 items-center gap-1 transition hover:text-[#F4C84B]"
+                className="inline-flex min-h-0 shrink-0 items-center gap-1 rounded-full px-1.5 py-2 transition hover:-translate-y-0.5 hover:text-[#F4C84B] min-[1400px]:px-2"
               >
                 More
                 <ChevronDown className="h-4 w-4" />
@@ -126,10 +136,10 @@ export default function Navbar() {
             </div>
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center min-[1200px]:flex">
             <Link
               href="/register"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#F4C84B] px-5 text-sm font-black uppercase text-[#07152E] shadow-lg shadow-[#F4C84B]/20 transition hover:bg-[#FFD96A]"
+              className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-[#F4C84B] px-3.5 text-xs font-black uppercase text-[#07152E] shadow-lg shadow-[#F4C84B]/20 transition hover:-translate-y-0.5 hover:bg-[#FFD96A] min-[1400px]:px-4"
             >
               Register Team
             </Link>
@@ -137,7 +147,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setOpen((value) => !value)}
-            className="rounded-2xl border border-[#F4C95D]/25 p-2 text-white lg:hidden"
+            className="rounded-2xl border border-[#F4C95D]/25 p-2 text-white min-[1200px]:hidden"
             aria-label="Toggle navigation"
           >
             {open ? <X size={26} /> : <Menu size={26} />}
@@ -146,14 +156,19 @@ export default function Navbar() {
       </Container>
 
       {open && (
-        <div className="border-t border-[#F4C95D]/15 bg-[#09153A] lg:hidden">
+        <div className="border-t border-[#F4C95D]/15 bg-[#09153A] min-[1200px]:hidden">
           <div className="mx-auto grid max-w-7xl gap-2 px-4 py-5 text-white">
             {primaryLinks.map(([label, href]) => (
               <Link
                 key={`${label}-${href}`}
                 href={href}
                 onClick={closeMenus}
-                className="rounded-2xl border border-white/10 bg-[#12224D] px-4 py-3 font-semibold"
+                aria-current={(href === "/" ? pathname === "/" : pathname.startsWith(href)) ? "page" : undefined}
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                  (href === "/" ? pathname === "/" : pathname.startsWith(href))
+                    ? "border-[#F4C95D]/35 bg-[#F4C95D]/10 text-[#F4C84B]"
+                    : "border-white/10 bg-[#12224D]"
+                }`}
               >
                 {label}
               </Link>

@@ -133,11 +133,8 @@ export function subscribeToMatch(
       console.timeEnd(listenerLabel);
     },
     (error) => {
-      console.error("[firestore-denied]", `matches/${matchId}`, error);
-
-      if (onError) {
-        onError(error);
-      }
+      callback(null);
+      if (onError) onError(error);
     }
   );
 }
@@ -154,24 +151,20 @@ export function subscribeToMatches(callback, onError) {
       );
     },
     (error) => {
-      console.error("[firestore-denied]", "matches", error);
-
-      if (onError) {
-        onError(error);
-      }
+      callback([]);
+      if (onError) onError(error);
     }
   );
 }
 
 export async function getMatches() {
-  const snapshot = await getDocs(
-    collection(db, "matches")
-  );
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const snapshot = await getDocs(collection(db, "matches"));
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    return [];
+  }
 }
 
 export async function deleteMatch(

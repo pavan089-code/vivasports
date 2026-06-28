@@ -7,19 +7,13 @@ import {
 import { db } from "@/Lib/firebase";
 
 export async function getSettings() {
-  const snapshot = await getDoc(
-    doc(
-      db,
-      "settings",
-      "tournament"
-    )
-  );
-
-  if (!snapshot.exists()) {
+  try {
+    const snapshot = await getDoc(doc(db, "settings", "tournament"));
+    if (!snapshot.exists()) return null;
+    return snapshot.data();
+  } catch {
     return null;
   }
-
-  return snapshot.data();
 }
 
 export async function saveSettings(

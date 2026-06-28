@@ -38,14 +38,13 @@ export async function createTeam(data) {
 }
 
 export async function getTeams() {
-  const snapshot = await getDocs(
-    collection(db, "teams")
-  );
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const snapshot = await getDocs(collection(db, "teams"));
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    return [];
+  }
 }
 
 export async function updateTeam(
@@ -62,9 +61,12 @@ export async function updateTeamByName(
   teamName,
   data
 ) {
-  const snapshot = await getDocs(
-    collection(db, "teams")
-  );
+  let snapshot;
+  try {
+    snapshot = await getDocs(collection(db, "teams"));
+  } catch {
+    return;
+  }
 
   const teamDoc =
     snapshot.docs.find(
@@ -92,11 +94,8 @@ export function subscribeToTeams(callback, onError) {
       );
     },
     (error) => {
-      console.error("[firestore-denied]", "teams", error);
-
-      if (onError) {
-        onError(error);
-      }
+      callback([]);
+      if (onError) onError(error);
     }
   );
 }

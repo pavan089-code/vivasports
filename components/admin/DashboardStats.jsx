@@ -18,37 +18,21 @@ export default function DashboardStats() {
 
   useEffect(() => {
     async function loadStats() {
-      const teamsSnapshot =
-        await getDocs(
-          collection(db, "teams")
-        );
-
-      const matchesSnapshot =
-        await getDocs(
-          collection(db, "matches")
-        );
-
-      const matches =
-        matchesSnapshot.docs.map((doc) =>
-          doc.data()
-        );
-
-      setStats({
-        teams: teamsSnapshot.size,
-
-        matches: matchesSnapshot.size,
-
-        live: matches.filter(
-          (m) =>
-            m.status === "live" ||
-            m.status === "innings_break"
-        ).length,
-
-        completed: matches.filter(
-          (m) =>
-            m.status === "completed"
-        ).length,
-      });
+      try {
+        const [teamsSnapshot, matchesSnapshot] = await Promise.all([
+          getDocs(collection(db, "teams")),
+          getDocs(collection(db, "matches")),
+        ]);
+        const matches = matchesSnapshot.docs.map((doc) => doc.data());
+        setStats({
+          teams: teamsSnapshot.size,
+          matches: matchesSnapshot.size,
+          live: matches.filter((match) => match.status === "live" || match.status === "innings_break").length,
+          completed: matches.filter((match) => match.status === "completed").length,
+        });
+      } catch {
+        setStats({ teams: 0, matches: 0, live: 0, completed: 0 });
+      }
     }
 
     loadStats();

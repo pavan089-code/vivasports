@@ -47,6 +47,7 @@ export function subscribeToTournamentRegistrations(callback, onError) {
       callback(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
     },
     (error) => {
+      callback([]);
       if (onError) onError(normalizeError(error));
     }
   );
@@ -67,7 +68,7 @@ export async function getTournamentRegistration(id) {
   try {
     const snapshot = await getDoc(doc(db, REGISTRATIONS_COLLECTION, id));
     return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null;
-  } catch (error) {
-    throw normalizeError(error);
+  } catch {
+    return null;
   }
 }

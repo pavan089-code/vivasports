@@ -32,6 +32,18 @@ const AUTOPLAY_DELAY = 6000;
 // Replace this local collection with a Firestore result when highlights become dynamic.
 export const highlights: TournamentHighlight[] = [
   {
+    id: "current-tournament",
+    title: "Viva Sports Tournament Center",
+    subtitle: "Current tournament · Matches, table and results",
+    description: "See what is live, what comes next and how the competition is taking shape.",
+    buttonText: "View tournament",
+    buttonLink: "/seasons",
+    secondaryButtonText: "Open Live Center",
+    secondaryButtonLink: "/live",
+    image: "/highlights/match-night.png",
+    type: "Live Match",
+  },
+  {
     id: "registration-2026",
     title: "Dr APJ Abdul Kalam Trophy",
     subtitle: "5th Edition • Hyderabad",

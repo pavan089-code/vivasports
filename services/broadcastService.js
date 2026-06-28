@@ -92,13 +92,13 @@ function broadcastRef() {
 }
 
 export async function getBroadcastSettings() {
-  const snapshot = await getDoc(broadcastRef());
-
-  if (!snapshot.exists()) {
+  try {
+    const snapshot = await getDoc(broadcastRef());
+    if (!snapshot.exists()) return defaultBroadcastSettings;
+    return normalizeSettings(snapshot.data());
+  } catch {
     return defaultBroadcastSettings;
   }
-
-  return normalizeSettings(snapshot.data());
 }
 
 export async function saveBroadcastSettings(data) {
@@ -118,10 +118,7 @@ export function subscribeToBroadcastSettings(callback, onError) {
   return onSnapshot(broadcastRef(), (snapshot) => {
     callback(normalizeSettings(snapshot.exists() ? snapshot.data() : {}));
   }, (error) => {
-    console.error("[firestore-denied]", "settings/broadcast", error);
-
-    if (onError) {
-      onError(error);
-    }
+    callback(defaultBroadcastSettings);
+    if (onError) onError(error);
   });
 }

@@ -8,19 +8,17 @@ export default function TeamList() {
   const [teams, setTeams] = useState([]);
 
   async function loadTeams() {
-    // FIX: Added quotes around "teams"
-    const snapshot = await getDocs(collection(db, "teams"));
-    const data = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setTeams(data);
+    try {
+      const snapshot = await getDocs(collection(db, "teams"));
+      setTeams(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    } catch {
+      setTeams([]);
+    }
   }
 
   async function handleDelete(teamId) {
     const confirmed = confirm("Delete this team?");
     if (!confirmed) return;
-    // FIX: Added quotes around "teams"
     await deleteDoc(doc(db, "teams", teamId));
     loadTeams();
   }

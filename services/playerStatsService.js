@@ -212,23 +212,23 @@ export async function updatePlayerStats(match) {
 }
 
 export async function getPlayerStats() {
-  const snapshot = await getDocs(collection(db, "playerStats"));
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const snapshot = await getDocs(collection(db, "playerStats"));
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    return [];
+  }
 }
 
 export async function getPlayerStat(playerId) {
-  const snapshot = await getDoc(doc(db, "playerStats", playerId));
-
-  if (!snapshot.exists()) return null;
-
-  return {
-    id: snapshot.id,
-    ...snapshot.data(),
-  };
+  try {
+    const snapshot = await getDoc(doc(db, "playerStats", playerId));
+    if (!snapshot.exists()) return null;
+    return { id: snapshot.id, ...snapshot.data() };
+  } catch {
+    return null;
+  }
 }
 
 export async function getTeamPlayersStats(teamName) {

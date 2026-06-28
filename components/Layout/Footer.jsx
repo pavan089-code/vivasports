@@ -13,7 +13,7 @@ const quickLinks = [
 ];
 
 const tournamentLinks = [
-  ["Live Matches", "/live"],
+  ["Live Center", "/live"],
   ["Fixtures", "/fixtures"],
   ["Results", "/results"],
   ["Points Table", "/pointstable"],
@@ -21,17 +21,16 @@ const tournamentLinks = [
   ["Player Statistics", "/leaderboards"],
 ];
 
-const supportLinks = [
-  ["Register Team", "/register"],
-  ["Rules", "/rules"],
-  ["FAQs", "/faqs"],
-  ["Hall Of Fame", "/hall-of-fame"],
-];
-
 const socialLinks = [
   ["Instagram", "#"],
   ["YouTube", "#"],
   ["Facebook", "#"],
+];
+
+const contactLinks = [
+  ["hello@vivasports.in", "mailto:hello@vivasports.in"],
+  ["+91 90000 00000", "tel:+919000000000"],
+  ["Hyderabad, Telangana", "/contact"],
 ];
 
 export default function Footer() {
@@ -74,8 +73,8 @@ export default function Footer() {
 
           <FooterColumn title="Quick Links" links={quickLinks} />
           <FooterColumn title="Tournament" links={tournamentLinks} />
-          <FooterColumn title="Support" links={supportLinks} />
           <FooterColumn title="Social" links={socialLinks} />
+          <FooterColumn title="Contact" links={contactLinks} />
         </div>
 
         <div className="flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-[#AAB8D5] md:flex-row md:items-center md:justify-between">

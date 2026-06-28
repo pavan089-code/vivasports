@@ -6,10 +6,11 @@ import {
 import { db } from "@/Lib/firebase";
 
 export async function getSeasonArchives() {
-  const snapshot = await getDocs(collection(db, "seasons"));
-
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  try {
+    const snapshot = await getDocs(collection(db, "seasons"));
+    if (snapshot.empty) return [];
+    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch {
+    return [];
+  }
 }
