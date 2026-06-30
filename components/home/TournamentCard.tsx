@@ -3,24 +3,21 @@
 import { Award, CalendarDays, MapPin, Medal, Play, Trophy } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 
+import Button from "@/components/ui/Button";
 import type { Tournament } from "@/services/tournamentService";
 
 const statusDesign = {
   upcoming: {
     badge: "border-[#d4af37]/35 bg-[#d4af37]/15 text-[#f4d878]",
-    button: "bg-[#d4af37] text-[#07152e] hover:bg-[#e5c158]",
     label: "Upcoming",
   },
   live: {
     badge: "border-emerald-300/35 bg-emerald-400/15 text-emerald-200",
-    button: "bg-emerald-400 text-[#041c16] hover:bg-emerald-300",
     label: "Live",
   },
   completed: {
     badge: "border-slate-300/20 bg-slate-400/10 text-slate-300",
-    button: "bg-slate-200 text-[#07152e] hover:bg-white",
     label: "Past",
   },
 } as const;
@@ -78,10 +75,10 @@ export default function TournamentCard({ tournament, index, featuredMatch }: { t
           )}
 
           <div className="mt-auto grid grid-cols-1 gap-2 pt-6 sm:grid-cols-2">
-            <Link className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-4 text-center text-xs font-black uppercase transition ${design.button}`} href={primary.href} target={primary.external ? "_blank" : undefined} rel={primary.external ? "noreferrer" : undefined}>
+            <Button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-4 text-center text-xs" href={primary.href} target={primary.external ? "_blank" : undefined} rel={primary.external ? "noreferrer" : undefined}>
               {(tournament.status === "live" || tournament.status === "completed") && <Play className="size-3.5 fill-current" />}{primary.label}
-            </Link>
-            <Link className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/14 bg-white/5 px-4 text-center text-xs font-black text-white uppercase transition hover:border-[#d4af37]/40 hover:text-[#e5c158]" href={tournament.buttonLink || "/seasons"}>{detailsLabel}</Link>
+            </Button>
+            <Button className="inline-flex min-h-12 items-center justify-center rounded-full px-4 text-center text-xs" href={tournament.buttonLink || "/seasons"} variant="outline">{detailsLabel}</Button>
           </div>
         </div>
       </motion.div>

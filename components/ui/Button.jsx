@@ -1,6 +1,9 @@
+import Link from "next/link";
+
 export default function Button({
   children,
   className = "",
+  href,
   variant = "primary",
   type = "button",
   ...props
@@ -22,11 +25,7 @@ export default function Button({
       "bg-[var(--vs-gold)] hover:bg-[var(--vs-gold-soft)] text-[#050B18]",
   };
 
-  return (
-    <button
-      {...props}
-      type={type}
-      className={`
+  const classes = `
         px-6 py-3
         rounded-lg
         font-black
@@ -35,8 +34,18 @@ export default function Button({
         transition-all duration-200
         ${variants[variant] || variants.primary}
         ${className}
-      `}
-    >
+      `;
+
+  if (href) {
+    return (
+      <Link {...props} className={classes} href={href}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <button {...props} type={type} className={classes}>
       {children}
     </button>
   );

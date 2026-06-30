@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import TournamentCard from "@/components/home/TournamentCard";
 import TournamentTabs, { type TournamentTab } from "@/components/home/TournamentTabs";
+import HomepageSectionHeader from "@/components/ui/HomepageSectionHeader";
 import type { HomepageData } from "@/services/homepageService";
 import type { Tournament, TournamentStatus } from "@/services/tournamentService";
 
@@ -24,20 +25,21 @@ export default function TournamentSection({ data }: { data: HomepageData | null 
   return (
     <motion.section
       aria-labelledby="tournaments-title"
-      className="bg-[#07152e] py-14 md:py-16 lg:py-20"
+      className="bg-[#07152e] py-12 md:py-16"
       initial={false}
       transition={{ duration: 0.5, ease: "easeOut" }}
       viewport={{ once: true, margin: "-80px" }}
       whileInView={prefersReducedMotion ? undefined : { opacity: [0, 1], y: [18, 0] }}
     >
       <div className="mx-auto w-[calc(100%-1.5rem)] max-w-7xl md:w-[calc(100%-3rem)]">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-black tracking-[0.22em] text-[#d4af37] uppercase">Competitions</p>
-          <h2 className="mt-3 text-4xl leading-none font-black tracking-[-0.035em] text-white uppercase md:text-6xl" id="tournaments-title">Our Tournaments</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-400 md:text-lg">Explore every tournament organised by Viva Sports.</p>
-        </div>
+        <HomepageSectionHeader
+          description="Explore every tournament organised by Viva Sports."
+          eyebrow="Competitions"
+          headingId="tournaments-title"
+          title="Our Tournaments"
+        />
 
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-start">
           <TournamentTabs activeTab={activeTab} onChange={setActiveTab} />
         </div>
 

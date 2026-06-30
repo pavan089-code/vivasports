@@ -3,8 +3,9 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import Button from "@/components/ui/Button";
 
 export type HeroCategory = "Current Tournament" | "Registrations Open" | "Upcoming Tournament" | "Champions" | "Sponsors" | "Gallery";
 
@@ -190,8 +191,8 @@ export default function TournamentHighlightsCarousel({ slides = highlights }: { 
               <h2 className="mt-2 max-w-3xl overflow-visible pb-[.08em] text-[1.65rem] leading-[1.02] font-black tracking-[-0.035em] text-balance break-normal hyphens-none text-white uppercase drop-shadow-lg sm:text-3xl md:mt-3 md:text-5xl lg:text-7xl">{activeSlide.title}</h2>
               <p className="mt-3 line-clamp-2 max-w-xl text-sm leading-6 text-slate-200 md:mt-4 md:text-lg md:leading-8">{activeSlide.description}</p>
               <div className="mt-4 flex w-full max-w-sm flex-col gap-2 sm:max-w-none sm:flex-row md:mt-6">
-                <Link aria-label={`${activeSlide.buttonPrimary}: ${activeSlide.title}`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#d4af37] px-6 py-3 text-sm font-black text-[#07152e] uppercase shadow-[0_10px_35px_rgba(212,175,55,.22)] transition hover:-translate-y-0.5 hover:bg-[#e5c158] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto" href={activeSlide.linkPrimary}>{activeSlide.buttonPrimary}<ArrowRight aria-hidden="true" className="size-4" /></Link>
-                {activeSlide.buttonSecondary && activeSlide.linkSecondary && <Link aria-label={`${activeSlide.buttonSecondary}: ${activeSlide.title}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-white/20 bg-[#07152e]/55 px-6 py-3 text-sm font-black text-white uppercase backdrop-blur-md transition hover:-translate-y-0.5 hover:border-[#d4af37]/55 hover:bg-[#10254a]/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto" href={activeSlide.linkSecondary}>{activeSlide.buttonSecondary}</Link>}
+                <Button aria-label={`${activeSlide.buttonPrimary}: ${activeSlide.title}`} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto" href={activeSlide.linkPrimary}>{activeSlide.buttonPrimary}<ArrowRight aria-hidden="true" className="size-4" /></Button>
+                {activeSlide.buttonSecondary && activeSlide.linkSecondary && <Button aria-label={`${activeSlide.buttonSecondary}: ${activeSlide.title}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-full backdrop-blur-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto" href={activeSlide.linkSecondary} variant="outline">{activeSlide.buttonSecondary}</Button>}
               </div>
             </div>
           </motion.article>
